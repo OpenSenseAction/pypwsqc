@@ -156,3 +156,8 @@ Thumbs.db
 # Common editor files
 *~
 *.swp
+.idea
+.vscode
+
+# Poetry lock file
+poetry.lock

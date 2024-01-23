@@ -23,18 +23,15 @@ def FZ_filter(
             FZ_array[i] = -1
         elif len(np.ma.compressed(Sensor_array[i])) == 0:
             FZ_array[i] = FZ_array[i - 1]
+        elif Sensor_array[i] > 0:
+            FZ_array[i] = 0
+        elif FZ_array[i - 1] == 1:
+            FZ_array[i] = 1
+        elif (np.sum(Sensor_array[i - nint : i + 1]) > 0) or (
+            np.sum(Ref_array[i - nint : i + 1]) < nint + 1
+        ):
+            FZ_array[i] = 0
         else:
-            if Sensor_array[i] > 0:
-                FZ_array[i] = 0
-            else:
-                if FZ_array[i - 1] == 1:
-                    FZ_array[i] = 1
-                elif np.sum(Sensor_array[i - nint : i + 1]) > 0:
-                    FZ_array[i] = 0
-                else:
-                    if np.sum(Ref_array[i - nint : i + 1]) < nint + 1:
-                        FZ_array[i] = 0
-                    else:
-                        FZ_array[i] = 1
+            FZ_array[i] = 1
 
     return FZ_array

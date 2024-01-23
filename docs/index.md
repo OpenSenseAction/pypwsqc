@@ -18,6 +18,13 @@ installation.md
 notebooks/foo_example.ipynb
 ```
 
+```{toctree}
+:caption: Development
+:hidden:
+
+development/refer_to_poligrain.md
+```
+
 ## Indices and tables
 
 - {ref}`genindex`

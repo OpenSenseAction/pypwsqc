@@ -1,15 +1,18 @@
+from __future__ import annotations
+
 import numpy as np
 
 import pypwsqc
 
 
 def test_simple():
+    # fmt: off
     pws_data = np.array([0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   ,
        0.   , 0.101, 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   ,
        0.   , 0.   , 0.101, 0.   , 0.   , 0.   , 0.   , 0.   , 0.   ,
        0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.101, 0.   ,
        0.   ])
-    
+
     reference = np.array([0.101     , 0.25136087, 0.1010425 , 0.        , 0.05012029,
        0.101     , 0.101     , 0.101     , 0.303     , 0.20048115,
        0.202     , 0.202     , 0.202     , 0.303     , 0.202     ,
@@ -22,7 +25,8 @@ def test_simple():
     expected = np.array([-1., -1., -1., -1., -1., -1.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,
         0.,  0.,  0.,  0.,  1.,  1.,  1.,  0.,  0.,  0.,  0.,  0.,  0.,
         0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0])
-    
+    # fmt: on
+
     result = pypwsqc.fz_filter.FZ_filter(pws_data, reference, nint=6)
-    
+
     np.testing.assert_almost_equal(expected, result)

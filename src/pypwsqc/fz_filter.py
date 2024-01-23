@@ -4,6 +4,7 @@ import numpy as np
 
 
 def FZ_filter(pws_data, reference, nint=6):
+    """Some doc string"""
     Ref_array = np.zeros(np.shape(pws_data))
     Ref_array[np.where(reference > 0)] = 1
 

@@ -84,7 +84,7 @@ report.exclude_also = [
 
 [tool.mypy]
 files = ["src", "tests"]
-python_version = "3.8"
+python_version = "3.10"
 warn_unused_configs = true
 strict = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
@@ -100,7 +100,7 @@ disallow_incomplete_defs = true
 
 [tool.ruff]
 src = ["src"]
-target-version = "py38"
+target-version = "py310"
 extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]

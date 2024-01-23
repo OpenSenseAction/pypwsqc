@@ -27,6 +27,6 @@ def test_simple():
         0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0])
     # fmt: on
 
-    result = pypwsqc.fz_filter.FZ_filter(pws_data, reference, nint=6)
+    result = pypwsqc.fz_filter.fz_filter(pws_data, reference, nint=6)
 
     np.testing.assert_almost_equal(expected, result)

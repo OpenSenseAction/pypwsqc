@@ -4,34 +4,34 @@ import numpy as np
 import numpy.typing as npt
 
 
-def FZ_filter(
+def fz_filter(
     pws_data: npt.ArrayLike, reference: npt.ArrayLike, nint: int = 6
 ) -> npt.ArrayLike:
     """Some doc string"""
-    Ref_array = np.zeros(np.shape(pws_data))
-    Ref_array[np.where(reference > 0)] = 1
+    ref_array = np.zeros(np.shape(pws_data))
+    ref_array[np.where(reference > 0)] = 1
 
-    Sensor_array = np.zeros(np.shape(pws_data))
-    Sensor_array[np.where(pws_data > 0)] = 1
-    Sensor_array[np.where(pws_data == 0)] = 0
+    sensor_array = np.zeros(np.shape(pws_data))
+    sensor_array[np.where(pws_data > 0)] = 1
+    sensor_array[np.where(pws_data == 0)] = 0
 
-    FZ_array = np.ones(np.shape(pws_data)) * -1
+    fz_array = np.ones(np.shape(pws_data)) * -1
 
     for i in np.arange(nint, np.shape(pws_data)[0]):
         # print(i)
-        if len(np.ma.compressed(Ref_array[i])) == 0:
-            FZ_array[i] = -1
-        elif len(np.ma.compressed(Sensor_array[i])) == 0:
-            FZ_array[i] = FZ_array[i - 1]
-        elif Sensor_array[i] > 0:
-            FZ_array[i] = 0
-        elif FZ_array[i - 1] == 1:
-            FZ_array[i] = 1
-        elif (np.sum(Sensor_array[i - nint : i + 1]) > 0) or (
-            np.sum(Ref_array[i - nint : i + 1]) < nint + 1
+        if len(np.ma.compressed(ref_array[i])) == 0:
+            fz_array[i] = -1
+        elif len(np.ma.compressed(sensor_array[i])) == 0:
+            fz_array[i] = fz_array[i - 1]
+        elif sensor_array[i] > 0:
+            fz_array[i] = 0
+        elif fz_array[i - 1] == 1:
+            fz_array[i] = 1
+        elif (np.sum(sensor_array[i - nint : i + 1]) > 0) or (
+            np.sum(ref_array[i - nint : i + 1]) < nint + 1
         ):
-            FZ_array[i] = 0
+            fz_array[i] = 0
         else:
-            FZ_array[i] = 1
+            fz_array[i] = 1
 
-    return FZ_array
+    return fz_array

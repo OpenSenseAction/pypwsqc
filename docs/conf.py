@@ -17,7 +17,7 @@ extensions = [
     "sphinx_copybutton",
 ]
 
-source_suffix = [".rst", ".md"]
+source_suffix = [".rst", ".md", ".ipynb"]
 exclude_patterns = [
     "_build",
     "**.ipynb_checkpoints",

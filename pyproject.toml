@@ -34,6 +34,7 @@ pytest-cov = { version = ">=3", optional = true }
 sphinx = { version = ">=7.0", optional = true }
 sphinx_copybutton = { version = ">=0.3.0", optional = true }
 sphinx-autodoc-typehints = { version = "*", optional = true }
+nbsphinx = { version = "*", optional = true }
 nbmake = { version = "^1.4.6", optional = true}
 
 [tool.poetry.dev-dependencies]
@@ -49,6 +50,7 @@ docs = [
   "sphinx",
   "sphinx_autodoc_typehints",
   "sphinx_copybutton",
+  "nbsphinx",
 ]
 
 [tool.poetry-dynamic-versioning]

@@ -25,11 +25,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-<<<<<<< HEAD
-python = ">=3.10"
-=======
 python = ">=3.10, <3.12"
->>>>>>> upstream/main
 
 furo = { version = ">=2023.08.17", optional = true }
 myst_parser = { version = ">=0.13", optional = true }
@@ -38,12 +34,9 @@ pytest-cov = { version = ">=3", optional = true }
 sphinx = { version = ">=7.0", optional = true }
 sphinx_copybutton = { version = ">=0.3.0", optional = true }
 sphinx-autodoc-typehints = { version = "*", optional = true }
-<<<<<<< HEAD
 numpy = "^1.26.3"
-=======
 nbsphinx = { version = "*", optional = true }
 nbmake = { version = "^1.4.6", optional = true}
->>>>>>> upstream/main
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"

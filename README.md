@@ -7,7 +7,13 @@
 [![Conda-Forge][conda-badge]][conda-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
 
-[![GitHub Discussion][github-discussions-badge]][github-discussions-link]
+`pypwsqc` is a Python package for quality control (QC) of data from personal
+weather stations (PWS), developed within the COST Action OPENSENSE.
+
+It's current main goal is to provide a unified implementation of the QC methods
+from [PWSQC](https://github.com/LottedeVos/PWSQC) (written in R, but parts of it
+are available in Python) and
+[pws-pyqc](https://github.com/AbbasElHachem/pws-pyqc) (written in Python).
 
 <!-- SPHINX-START -->
 

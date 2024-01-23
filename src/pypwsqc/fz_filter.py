@@ -5,8 +5,8 @@ import numpy.typing as npt
 
 
 def fz_filter(
-    pws_data: npt.ArrayLike, reference: npt.ArrayLike, nint: int = 6
-) -> npt.ArrayLike:
+    pws_data: npt.NDArray, reference: npt.NDArray, nint: int = 6
+) -> npt.NDArray:
     """Some doc string"""
     ref_array = np.zeros(np.shape(pws_data))
     ref_array[np.where(reference > 0)] = 1

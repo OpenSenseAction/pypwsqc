@@ -40,6 +40,7 @@ nbmake = { version = "^1.4.6", optional = true}
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
 pytest-cov = ">= 3"
+jupyterlab = "^4.0.10"
 
 [tool.poetry.extras]
 test = ["pytest", "pytest-cov", "nbmake"]

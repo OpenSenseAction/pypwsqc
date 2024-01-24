@@ -15,7 +15,7 @@ installation.md
 :caption: Examples
 :hidden:
 
-notebooks/foo_example.ipynb
+notebooks/faulty_zero_filter.ipynb
 ```
 
 ```{toctree}

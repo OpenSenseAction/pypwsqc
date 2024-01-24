@@ -18,12 +18,7 @@ def fz_filter(
     fz_array = np.ones(np.shape(pws_data)) * -1
 
     for i in np.arange(nint, np.shape(pws_data)[0]):
-        # print(i)
-        if len(np.ma.compressed(ref_array[i])) == 0:
-            fz_array[i] = -1
-        elif len(np.ma.compressed(sensor_array[i])) == 0:
-            fz_array[i] = fz_array[i - 1]
-        elif sensor_array[i] > 0:
+        if sensor_array[i] > 0:
             fz_array[i] = 0
         elif fz_array[i - 1] == 1:
             fz_array[i] = 1

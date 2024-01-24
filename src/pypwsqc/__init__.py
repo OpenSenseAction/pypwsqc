@@ -9,6 +9,6 @@ from __future__ import annotations
 
 __version__ = "0.0.0"
 
-from . import fz_filter
+from . import flagging
 
-__all__ = ["__version__", "fz_filter"]
+__all__ = ["__version__", "flagging"]

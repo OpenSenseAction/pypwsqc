@@ -161,3 +161,5 @@ Thumbs.db
 
 # Poetry lock file
 poetry.lock
+
+.virtual_documents/docs/notebooks/foo_example.ipynb

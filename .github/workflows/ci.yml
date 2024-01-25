@@ -67,7 +67,3 @@ jobs:
       - name: Test notebooks on Linux and MacOS
         if: runner.os != 'Windows'
         run: python -m pytest --nbmake docs/notebooks/*.ipynb
-
-      - name: Debug with tmate on failure
-        if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3

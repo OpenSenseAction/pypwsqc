@@ -58,7 +58,7 @@ jobs:
           allow-prereleases: true
 
       - name: Install package
-        run: python -m pip install .[test]
+        run: python -m pip install --only-binary netcdf4 .[test]
 
       - name: Test package
         run: >-

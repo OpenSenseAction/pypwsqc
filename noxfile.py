@@ -47,7 +47,6 @@ def docs(session: nox.Session) -> None:
     """
     Build the docs. Pass "--serve" to serve. Pass "-b linkcheck" to check links.
     """
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--serve", action="store_true", help="Serve after building")
     parser.add_argument(
@@ -89,7 +88,6 @@ def build_api_docs(session: nox.Session) -> None:
     """
     Build (regenerate) API docs.
     """
-
     session.install("sphinx")
     session.chdir("docs")
     session.run(
@@ -108,7 +106,6 @@ def build(session: nox.Session) -> None:
     """
     Build an SDist and wheel.
     """
-
     build_path = DIR.joinpath("build")
     if build_path.exists():
         shutil.rmtree(build_path)

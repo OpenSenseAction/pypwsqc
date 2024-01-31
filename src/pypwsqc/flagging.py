@@ -1,3 +1,6 @@
+"""A collection of functions for flagging problematic time steps."""
+
+
 from __future__ import annotations
 
 import numpy as np
@@ -7,7 +10,30 @@ import numpy.typing as npt
 def fz_filter(
     pws_data: npt.NDArray, reference: npt.NDArray, nint: int = 6
 ) -> npt.NDArray:
-    """Some doc string"""
+    """Flag faulty zeros based on a reference time series.
+
+    This function applies the FZ filter from the R package PWSQC.
+    The flag 1 means, a faulty zero has been detected. The flag -1
+    means that no flagging was done because evaluation cannot be
+    performed for the first `nint` values.
+
+    Parameters
+    ----------
+    pws_data
+        The rainfall time series of the PWS that should be flagged
+    reference
+        The rainfall time series of the reference, which can be e.g.
+        the mediah of neighboring PWS data.
+    nint : optional
+        The number of subsequent data points which have to be zero, while
+        the reference has values larger than zero, to set the flag for
+        this data point to 1.
+
+    Returns
+    -------
+    npt.NDArray
+        time series of flags
+    """
     ref_array = np.zeros(np.shape(pws_data))
     ref_array[np.where(reference > 0)] = 1
 

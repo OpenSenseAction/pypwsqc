@@ -8,8 +8,8 @@ import numpy.typing as npt
 
 
 def fz_filter(
-    pws_data: npt.NDArray, reference: npt.NDArray, nint: int = 6
-) -> npt.NDArray:
+    pws_data: npt.NDArray[np.float_], reference: npt.NDArray[np.float_], nint: int = 6
+) -> npt.NDArray[np.float_]:
     """Flag faulty zeros based on a reference time series.
 
     This function applies the FZ filter from the R package PWSQC.
@@ -23,7 +23,7 @@ def fz_filter(
         The rainfall time series of the PWS that should be flagged
     reference
         The rainfall time series of the reference, which can be e.g.
-        the mediah of neighboring PWS data.
+        the median of neighboring PWS data.
     nint : optional
         The number of subsequent data points which have to be zero, while
         the reference has values larger than zero, to set the flag for
@@ -41,7 +41,7 @@ def fz_filter(
     sensor_array[np.where(pws_data > 0)] = 1
     sensor_array[np.where(pws_data == 0)] = 0
 
-    fz_array = np.ones(np.shape(pws_data)) * -1
+    fz_array = np.ones(np.shape(pws_data), dtype=float) * -1
 
     for i in np.arange(nint, np.shape(pws_data)[0]):
         if sensor_array[i] > 0:

@@ -23,6 +23,7 @@ notebooks/faulty_zero_filter.ipynb
 :hidden:
 
 development/refer_to_poligrain.md
+development/CHANGELOG.md
 ```
 
 ## Indices and tables

@@ -12,6 +12,9 @@
 
 ### Maintenance
 
+- [PR 12](https://github.com/OpenSenseAction/pypwsqc/pull/12) Disable mypy for
+  pre-commit and CI [@cchwala](https://github.com/cchwala))
+
 ### Breaking changes
 
 ## v0.0.1

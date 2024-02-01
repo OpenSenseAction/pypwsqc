@@ -17,6 +17,12 @@ def fz_filter(
     means that no flagging was done because evaluation cannot be
     performed for the first `nint` values.
 
+    Note that this code here is derived from the Python translation,
+    done by Niek van Andel, of the original R code from Lotte de Vos.
+    The Python code stems from here https://github.com/NiekvanAndel/QC_radar.
+    Also note that the correctness of the Python code has not been
+    verified and not all feature of the R implementation might be there.
+
     Parameters
     ----------
     pws_data
@@ -41,13 +47,14 @@ def fz_filter(
     sensor_array[np.where(pws_data > 0)] = 1
     sensor_array[np.where(pws_data == 0)] = 0
 
-    fz_array = np.ones(np.shape(pws_data), dtype=float) * -1
+    fz_array = np.ones(np.shape(pws_data), dtype=np.float_) * -1
 
     for i in np.arange(nint, np.shape(pws_data)[0]):
         if sensor_array[i] > 0:
             fz_array[i] = 0
         elif fz_array[i - 1] == 1:
             fz_array[i] = 1
+        # TODO: check why `< nint + 1` is used here. should `nint`` be scaled with a selectable factor?
         elif (np.sum(sensor_array[i - nint : i + 1]) > 0) or (
             np.sum(ref_array[i - nint : i + 1]) < nint + 1
         ):

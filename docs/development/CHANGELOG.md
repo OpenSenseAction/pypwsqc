@@ -14,6 +14,8 @@
 
 - [PR 12](https://github.com/OpenSenseAction/pypwsqc/pull/12) Disable mypy for
   pre-commit and CI [@cchwala](https://github.com/cchwala))
+- [PR 18](https://github.com/OpenSenseAction/pypwsqc/pull/18) Add ruff linting
+  for docstring [@cchwala](https://github.com/cchwala))
 
 ### Breaking changes
 

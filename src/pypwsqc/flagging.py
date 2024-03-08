@@ -54,7 +54,8 @@ def fz_filter(
             fz_array[i] = 0
         elif fz_array[i - 1] == 1:
             fz_array[i] = 1
-        # TODO: check why `< nint + 1` is used here. should `nint`` be scaled with a selectable factor?
+        # TODO: check why `< nint + 1` is used here.
+        #       should `nint`` be scaled with a selectable factor?
         elif (np.sum(sensor_array[i - nint : i + 1]) > 0) or (
             np.sum(ref_array[i - nint : i + 1]) < nint + 1
         ):

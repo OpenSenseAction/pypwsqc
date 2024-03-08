@@ -1,5 +1,4 @@
-"""
-Copyright (c) 2024 Christian Chwala. All rights reserved.
+"""Copyright (c) 2024 Christian Chwala. All rights reserved.
 
 pypwsqc: Quality control for PWS data
 """

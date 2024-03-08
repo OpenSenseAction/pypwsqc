@@ -107,6 +107,7 @@ disallow_incomplete_defs = true
 
 [tool.ruff]
 src = ["src"]
+line-length = 88
 target-version = "py310"
 extend-include = ["*.ipynb"]
 
@@ -122,6 +123,7 @@ extend-select = [
   "PGH",      # pygrep-hooks
   "PIE",      # flake8-pie
   "PL",       # pylint
+  "A001",     # flake8-builtins
   "PT",       # flake8-pytest-style
   "PTH",      # flake8-use-pathlib
   "RET",      # flake8-return
@@ -133,6 +135,11 @@ extend-select = [
   "EXE",      # flake8-executable
   "NPY",      # NumPy specific rules
   "PD",       # pandas-vet
+  "E",        # style errors
+  "W",        # style warnings
+  "F",        # flakes
+  "D",        # pydocstyle
+  "U",        # pyupgrade
 ]
 ignore = [
   "PLR09",    # Too many <...>
@@ -149,9 +156,12 @@ ignore = [
 # typing-modules = ["pypwsqc._compat.typing"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["T20"]
-"noxfile.py" = ["T20"]
+"tests/**" = ["T20", "D"]
+"noxfile.py" = ["T20", "D100"]
+"docs/conf.py" = ["D100", "A001"]
 
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
 
 [tool.pylint]
 py-version = "3.8"

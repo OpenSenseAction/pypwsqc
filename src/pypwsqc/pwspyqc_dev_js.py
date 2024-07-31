@@ -1,17 +1,12 @@
-# scratchpad for testing and implementing pwspyqc-functions 
-
-
-import numpy as np
+""" scratchpad for testing and implementing pwspyqc-functions"""
 import pandas as pd
 import xarray as xr
 import datetime
 import os
 import re
 import tqdm
-
 import warnings
 import glob
-
 import poligrain as plg
 
 
@@ -19,7 +14,7 @@ import poligrain as plg
 
 def calc_indicator_correlation(a_dataset, b_dataset, prob, exclude_nan=True, min_valid_overlap=None):
     """
-    To calcualte indicator correlation two datasets
+    To calculate indicator correlation two datasets
 
     Parameters
     ----------
@@ -49,9 +44,9 @@ def calc_indicator_correlation(a_dataset, b_dataset, prob, exclude_nan=True, min
         a_dataset = a_dataset[both_not_nan]
         b_dataset = b_dataset[both_not_nan]
 
-    if min_valid_overlap is not None:
-        if sum(both_not_nan) < min_valid_overlap:
-            return np.nan
+    elif min_valid_overlap is not None:
+        sum(both_not_nan) < min_valid_overlap:
+        return np.nan
     else:
         if sum(both_not_nan) == 0:
             raise ValueError('No overlapping data. Define `min_valid_overlap` to return NaN in such cases.')
@@ -68,7 +63,7 @@ def calc_indicator_correlation(a_dataset, b_dataset, prob, exclude_nan=True, min
     a_dataset[a_dataset > 0] = 1
     b_dataset[b_dataset > 0] = 1
 
-    # Calcualte correlation of 0 and 1 time series
+    # Calculate correlation of 0 and 1 time series
     cc = np.corrcoef(a_dataset, b_dataset)[0, 1]
 
     return cc

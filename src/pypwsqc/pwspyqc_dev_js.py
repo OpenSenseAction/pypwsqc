@@ -125,248 +125,82 @@ def calc_indic_corr_all_stns(
     )
 
 
-# def indicator_filter(xy_net, prc_net, xy_dwd, prc_dwd,
-#                      prob=0.99, max_distance=50000,
-#                      min_req_ppt_vals=2*24*30,
-#                      show_plot=False,
-#                      fn_figure='Indicator Filter',
-#                      save_folder=None,
-#                     tolerance=0.8):
-#     """
-#     Filters stations of the secondary network by comparing indicator
-#     correlations between primary and secondary network and nearest
-#     stations of the primary network.
-
-#     Parameters
-#     ----------
-#     coords_net: 'numpy.ndarray' [N x 2]
-#         Coordinates of secondary network
-#     data_net: 'numpy.ndarray' [timesteps x N]
-#         Dataset of secondary network
-#     coords_dwd: 'numpy.ndarray' [M x 2]
-#         Coordinates of primary network
-#     data_dwd: 'numpy.ndarray' [timesteps x M]
-#         Dataset of primary network
-#     prob: 'float', optional (default: 0.99)
-#         Percentile for the determination of the indicator correlation
-#     max_distance: 'int', optional (default: 50000)
-#         Distance limit between stations of primary network
-#     perc_avail_data: 'float', optional (default: 0.7)
-#         Percentage of available time steps
-#     show_plot: 'bool', optional (default: False)
-#         Show plots
-
-#     Returns
-#     ----------
-#     stn_in_bool: 'numpy.ndarray (bool)' [N]
-#         True: Station is 'good', False: Station is 'bad'
-
-#     Raises
-#     ----------
-
-#     """
-
-
-# def calc_indic_corr_all_stns_new(
-#     da_a,
-#     da_b,
-#     max_distance=50000, # this is in meters, assuming the projection units are also meters # noqa: E501
-#     prob=0.99,
-#     exclude_nan=True,
-#     min_valid_overlap=None,
-# ):
-
-#     """
-#     Indicator correlation between reference and test stations
-
-#     return: indicator correlation and distance values
-
-#     """
-#     import scipy
-#     xy_a = list(zip(da_a.x.data, da_a.y.data))
-#     xy_b = list(zip(da_b.x.data, da_b.y.data))
-#     dist_mtx = scipy.spatial.distance.cdist(xy_a, xy_b, metric='euclidean')
-
-#     list_corr = []
-#     list_dist = []
-#     for i in tqdm.tqdm(range(len(xy_a) - 1)):
-#         for j in range(i + 1, len(xy_b)):
-#             # check if distance between stations is less than max_distance
-#             if dist_mtx[i, j] < max_distance:
-#                 indi_corr = calc_indicator_correlation(
-#                     da_a.isel(id=i).data,
-#                     da_b.isel(id=j).data,
-#                     prob=prob,
-#                     exclude_nan=exclude_nan,
-#                     min_valid_overlap=min_valid_overlap,
-#                 )
-#                 list_dist.append(dist_mtx[i, j])
-#                 list_corr.append(indi_corr)
-#     dist_vals = np.asarray(list_dist)
-#     corr_vals = np.asarray(list_corr)
-
-#     # Dimensionen benennen! StastionsID Als xarray.Darray
-#     dist_vals=xr.DataArray(dist_vals, coords={'id' : da_a.id , 'id_neighbor' : da_b.id })
-#     corr_cals=.....
-#     return dist_vals, corr_vals
-
-
-def indicator_filter(
-    xy_net,
-    prc_net,
-    xy_dwd,
-    prc_dwd,
-    prob=0.99,
-    max_distance=50000,
-    min_req_ppt_vals=2 * 24 * 30,
-    show_plot=False,
-    fn_figure="Indicator Filter",
-    save_folder=None,
-    tolerance=0.8,
+def indicator_correlation_filter(
+    indicator_correlation_matrix_ref,
+    distance_correlation_matrix_ref,
+    indicator_correlation_matrix,
+    distance_matrix,
+    max_distance=20e3,
+    bin_size=1e3,
+    quantile_bin_ref=0.1,
+    quantile_bin_pws=0.5,
+    threshold=0.01,
 ):
-    """
-    Filters stations of the secondary network by comparing indicator
-    correlations between primary and secondary network and nearest
-    stations of the primary network.
+    """Apply indicator correlation filer to filter out PWS that do not match the correlation structure of reference data set.
 
     Parameters
     ----------
-    coords_net: 'numpy.ndarray' [N x 2]
-        Coordinates of secondary network
-    data_net: 'numpy.ndarray' [timesteps x N]
-        Dataset of secondary network
-    coords_dwd: 'numpy.ndarray' [M x 2]
-        Coordinates of primary network
-    data_dwd: 'numpy.ndarray' [timesteps x M]
-        Dataset of primary network
-    prob: 'float', optional (default: 0.99)
-        Percentile for the determination of the indicator correlation
-    max_distance: 'int', optional (default: 50000)
-        Distance limit between stations of primary network
-    perc_avail_data: 'float', optional (default: 0.7)
-        Percentage of available time steps
-    show_plot: 'bool', optional (default: False)
-        Show plots
+    indicator_correlation_matrix_ref: xr.DataArray with indicator correlation matrix between reference stations (REF)
+    distance_correlation_matrix_ref: xr.DataArray with distance matrix between reference stations (REF)
+    indicator_correlation_matrix: xr.DataArray with indicator correlations matrix between REF and PWS
+    distance_matrix: xr.DataArray with distance matrix between REF and PWS
+    range: range in meters for which the indicator correlation is evaluated
+    bin_size: bin size in meters
+    acceptance_level: quantile for acceptance level of reference indicator correlation
+    threshold: indicator correlation threshold below acceptance level where PWS are still accepted
 
     Returns
     -------
-    stn_in_bool: 'numpy.ndarray (bool)' [N]
-        True: Station is 'good', False: Station is 'bad'
-
-    Raises
-    ------
-    nothing
-
+    boolean if station got accepted
+    indicator correlation score
     """
-    # calculate indicator correlation between dwd stations
-    dist_matrix_dwd_dwd = scsp.distance.cdist(xy_dwd, xy_dwd, metric="euclidean")
+    bins = np.arange(0, max_distance, bin_size)
 
-    dist_matrix_dwd_net = scsp.distance.cdist(xy_dwd, xy_net, metric="euclidean")
-
-    dist_dwd, corr_dwd = calc_indic_corr_all_stns(
-        coords_stns_xy=xy_dwd,
-        pcp_vals=prc_dwd.values,
-        max_distance=max_distance,
-        min_req_ppt_vals=min_req_ppt_vals,
-        prob=prob,
+    # quantile parameter not too low, otherwise the line becomes to wiggly - depends on data  # noqa: E501
+    binned_indcorr_ref = (
+        indicator_correlation_matrix_ref.groupby_bins(
+            distance_correlation_matrix_ref, bins=bins
+        )
+        .quantile(quantile_bin_ref)
+        .bfill(dim="group_bins")
     )
 
-    # print(dist_dwd, corr_dwd)
+    # Function for Rank Sum Weights
+    # Calculates weights according to length to data set
+    def rsw(m):
+        alphas = []  # Leere Liste
+        for i in range(1, m + 1):  # Iteration über m Alternativen
+            alpha = (m + 1.0 - i) / sum(range(1, m + 1))
+            alphas.append(alpha)
+        return alphas
 
-    if show_plot:
-        stn_in = []
-        dist_stn_in = []
+    pws_indcorr_good_list = []
+    pws_indcorr_score_list = []
 
-        stn_notin = []
-        dist_stn_notin = []
-
-    stn_in_bool = np.zeros(dist_matrix_dwd_net.shape[1], dtype=bool)
-    for i in tqdm.tqdm(range(dist_matrix_dwd_net.shape[1])):
-        # print(i, dist_matrix_dwd_net.shape[1])
-        net_stn = prc_net.iloc[:, i]
-        net_stn[net_stn == -9] = np.nan
-        net_stn_nonan = net_stn.dropna(how="all")
-
-        nearest_stn_ids = np.argsort(dist_matrix_dwd_net[:, i])
-        # print('nearest_stn_ids', len(nearest_stn_ids))
-        for stn_id in nearest_stn_ids:  # TODO: notwendig?
-            # print()
-
-            prim_stn = prc_dwd.iloc[:, stn_id]
-            prim_stn[prim_stn == -9] = np.nan
-            prim_stn_nonan = prim_stn.dropna(how="all")
-
-            ij_bool_avail_data = net_stn_nonan.index.intersection(prim_stn_nonan.index)
-
-            # print(ij_bool_avail_data)
-            # If sufficient number of data available
-            if len(ij_bool_avail_data) > min_req_ppt_vals:
-                indi_corr = calc_indicator_correlation(
-                    net_stn_nonan.loc[ij_bool_avail_data].dropna(),
-                    prim_stn_nonan.loc[ij_bool_avail_data].dropna(),
-                    prob,
-                )
-                # print(indi_corr, dist_matrix_dwd_net[stn_id, i])
-                delta = 1000
-                va = corr_dwd[dist_dwd < dist_matrix_dwd_net[stn_id, i] + delta]
-                add_distance = 1000
-                while va.shape[0] < 5:
-                    va = corr_dwd[
-                        dist_dwd < dist_matrix_dwd_net[stn_id, i] + delta + add_distance
-                    ]
-                    add_distance += delta
-                    # print(va)
-                # print(indi_corr, np.min(va), np.min(va*tolerance))
-                if indi_corr > np.min(va * tolerance, 0):
-                    stn_in_bool[i] = True
-                    # print('PWS accepted')
-                    if show_plot:
-                        stn_in.append(indi_corr)
-                        dist_stn_in.append(dist_matrix_dwd_net[stn_id, i])
-                    # break
-
-                else:
-                    stn_notin.append(indi_corr)
-                    dist_stn_notin.append(dist_matrix_dwd_net[stn_id, i])
-                    # break
-
-    print("Total Accepted", np.sum(stn_in_bool), dist_matrix_dwd_net.shape[1])
-
-    if show_plot:
-        plt.figure(dpi=200)
-        plt.scatter(
-            dist_stn_in,
-            stn_in,
-            alpha=0.4,
-            s=15,
-            c="blue",
-            label="PWS-Prim. In n=%d" % np.sum(stn_in_bool * 1),
-        )
-        plt.scatter(dist_dwd, corr_dwd, alpha=0.4, s=15, c="red", label="Prim.-Prim.")
-
-        plt.scatter(
-            dist_stn_notin,
-            stn_notin,
-            alpha=0.4,
-            s=15,
-            c="grey",
-            label="PWS-Prim. Out n=%d" % (len(stn_in_bool) - np.sum(stn_in_bool * 1)),
+    # iterates over REF (id)
+    for pws_id in indicator_correlation_matrix["id_neighbor"].values:  # noqa: PD011
+        binned_indcorr_pws = (
+            indicator_correlation_matrix.sel(id_neighbor=pws_id)
+            .groupby_bins(distance_matrix.sel(id_neighbor=pws_id), bins=bins)
+            .quantile(quantile_bin_pws, skipna=True)
         )
 
-        plt.xlim([0, 30000])
-        plt.ylim([0, 1])
-        plt.grid()
-        plt.title(f"{fn_figure}")
-        plt.xlabel("Distance between stations [m]")
-        plt.ylabel(f"Indicator Correlation p{int(prob * 100):d} [-]")
-        plt.legend(loc=1)
-        plt.tight_layout()
-        # if save_folder:
-        #    plt.savefig(Path(save_folder, '{}.png'.format(fn_figure)), dpi=200,
-        #                bbox_inches='tight')
-        # else:
-        #    plt.savefig('{}.png'.format(fn_figure), dpi=200,
-        #                bbox_inches='tight')
-        plt.show()
+        IndCorrGood = binned_indcorr_pws + threshold > binned_indcorr_ref
 
-    return stn_in_bool
+        # Bool Information if PWS passed Indicator Correlation Test
+        pws_indcorr_good_list.append(IndCorrGood.any())
+
+        # Valid bins for normed weights
+        ValidBins = np.isfinite(binned_indcorr_pws.values)
+        RankSumWeights = rsw(len(IndCorrGood))
+        NormedWeights = sum(ValidBins * np.array(RankSumWeights))
+
+        score = sum(IndCorrGood.values * np.array(RankSumWeights)) / NormedWeights # noqa: PD011
+        pws_indcorr_score_list.append(score)
+
+    result = indicator_correlation_matrix.to_dataset(name="indcorr")
+    result["dist"] = distance_matrix
+    result["indcorr_good"] = ("id_neighbor", pws_indcorr_good_list)
+    result["indcorr_score"] = ("id_neighbor", pws_indcorr_score_list)
+
+    return result

@@ -16,6 +16,7 @@ installation.md
 :hidden:
 
 notebooks/merged_filters.ipynb
+notebooks/indicator_correlation_filter.ipynb
 ```
 
 ```{toctree}

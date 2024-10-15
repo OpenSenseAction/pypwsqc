@@ -187,17 +187,17 @@ def indicator_correlation_filter(
             .quantile(quantile_bin_pws, skipna=True)
         )
 
-        IndCorrGood = binned_indcorr_pws + threshold > binned_indcorr_ref
+        indcorr_good = binned_indcorr_pws + threshold > binned_indcorr_ref
 
         # Bool Information if PWS passed Indicator Correlation Test
-        pws_indcorr_good_list.append(IndCorrGood.any())
+        pws_indcorr_good_list.append(indcorr_good.any())
 
         # Valid bins for normed weights
-        ValidBins = np.isfinite(binned_indcorr_pws.values)
-        RankSumWeights = rsw(len(IndCorrGood))
-        NormedWeights = sum(ValidBins * np.array(RankSumWeights))
+        valid_bins = np.isfinite(binned_indcorr_pws.values)
+        rank_sum_weights = rsw(len(indcorr_good))
+        normed_weights = sum(valid_bins * np.array(rank_sum_weights))
 
-        score = sum(IndCorrGood.values * np.array(RankSumWeights)) / NormedWeights  # noqa: PD011
+        score = sum(indcorr_good.values * np.array(rank_sum_weights)) / normed_weights  # noqa: PD011
         pws_indcorr_score_list.append(score)
 
     result = indicator_correlation_matrix.to_dataset(name="indcorr")

@@ -1,6 +1,5 @@
 """scratchpad for testing and implementing pwspyqc-functions."""
 
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 import tqdm
@@ -23,9 +22,11 @@ def calc_indicator_correlation(
     indicator correlation value
     """
     if len(a_dataset.shape) != 1:
-        raise ValueError("`a_dataset` has to be a 1D numpy.ndarray")
+        msg = "`a_dataset` has to be a 1D numpy.ndarray"
+        raise ValueError(msg)
     if a_dataset.shape != b_dataset.shape:
-        raise ValueError("`a_dataset` and `b_dataset` have to have the same shape")
+        msg = "`a_dataset` and `b_dataset` have to have the same shape"
+        raise ValueError(msg)
 
     a_dataset = np.copy(a_dataset)
     b_dataset = np.copy(b_dataset)
@@ -38,11 +39,10 @@ def calc_indicator_correlation(
     if min_valid_overlap is not None:
         if sum(both_not_nan) < min_valid_overlap:
             return np.nan
-    else:
+    else:  # noqa: PLR5501
         if sum(both_not_nan) == 0:
-            raise ValueError(
-                "No overlapping data. Define `min_valid_overlap` to return NaN in such cases."
-            )
+            msg = "No overlapping data. Define `min_valid_overlap` to return NaN in such cases."  # noqa: E501
+            raise ValueError(msg)
 
     # Get index at quantile threshold `prob`
     ix = int(a_dataset.shape[0] * prob)
@@ -58,7 +58,7 @@ def calc_indicator_correlation(
 
     # Calculate correlation of 0 and 1 time series
     cc = np.corrcoef(a_dataset, b_dataset)[0, 1]
-    return cc
+    return cc  # noqa: RET504
 
 
 def calc_indic_corr_all_stns(
@@ -95,34 +95,23 @@ def calc_indic_corr_all_stns(
                     exclude_nan=exclude_nan,
                     min_valid_overlap=min_valid_overlap,
                 )
-                # list_dist.append(dist_mtx[i, j])
-                # list_corr.append(indi_corr)
-    # dist_vals = np.asarray(list_dist)
-    # corr_vals = np.asarray(list_corr)
-
-    # Dimensionen benennen! StastionsID Als xarray.Darray
-    # dist_vals=xr.DataArray(dist_vals, coords={'id' : da_a.id , 'id_neighbor' : da_b.id }) # noqa: E501
-    # corr_cals=.....
-    # return dist_vals, corr_vals
-    # return dist_mtx, indcorr_mtx
-    return (
-        xr.DataArray(
-            data=dist_mtx,
-            dims=("id", "id_neighbor"),
-            coords={
-                "id": ("id", da_a.id.data),
-                "id_neighbor": ("id_neighbor", da_b.id.data),
-            },
-        ),
-        xr.DataArray(
-            data=indcorr_mtx,
-            dims=("id", "id_neighbor"),
-            coords={
-                "id": ("id", da_a.id.data),
-                "id_neighbor": ("id_neighbor", da_b.id.data),
-            },
-        ),
+    da_dist_mtx = xr.DataArray(
+        data=dist_mtx,
+        dims=("id", "id_neighbor"),
+        coords={
+            "id": ("id", da_a.id.data),
+            "id_neighbor": ("id_neighbor", da_b.id.data),
+        },
     )
+    da_indcorr_mtx = xr.DataArray(
+        data=indcorr_mtx,
+        dims=("id", "id_neighbor"),
+        coords={
+            "id": ("id", da_a.id.data),
+            "id_neighbor": ("id_neighbor", da_b.id.data),
+        },
+    )
+    return da_dist_mtx, da_indcorr_mtx
 
 
 def indicator_correlation_filter(
@@ -136,18 +125,31 @@ def indicator_correlation_filter(
     quantile_bin_pws=0.5,
     threshold=0.01,
 ):
-    """Apply indicator correlation filer to filter out PWS that do not match the correlation structure of reference data set.
+    """Apply indicator correlation filter.
 
     Parameters
     ----------
-    indicator_correlation_matrix_ref: xr.DataArray with indicator correlation matrix between reference stations (REF)
-    distance_correlation_matrix_ref: xr.DataArray with distance matrix between reference stations (REF)
-    indicator_correlation_matrix: xr.DataArray with indicator correlations matrix between REF and PWS
-    distance_matrix: xr.DataArray with distance matrix between REF and PWS
-    range: range in meters for which the indicator correlation is evaluated
-    bin_size: bin size in meters
-    acceptance_level: quantile for acceptance level of reference indicator correlation
-    threshold: indicator correlation threshold below acceptance level where PWS are still accepted
+    indicator_correlation_matrix_ref: xr.DataArray
+        Indicator correlation matrix between reference stations (REF)
+    distance_correlation_matrix_ref: xr.DataArray
+        Distance matrix between reference stations (REF)
+    indicator_correlation_matrix: xr.DataArray
+        Indicator correlations matrix between REF and PWS
+    distance_matrix: xr.DataArray
+        Distance matrix between REF and PWS
+    max_distance: int or float
+        Range in meters for which the indicator correlation is evaluated
+    bin_size: int or float
+        Bin size in meters. This bin size is used to group data for the
+        quantile calculation
+    quantile_bin_ref: float
+        Quantile for acceptance level based on reference data indicator correlation
+    quantile_bin_pws: float
+        Quantile of PWS data indicator correlation that has to be
+        above `quantile_bin_ref` + `threshold`
+    threshold: float
+        Indicator correlation threshold below `quantile_bin_ref` where PWS are
+        still accepted
 
     Returns
     -------
@@ -195,7 +197,7 @@ def indicator_correlation_filter(
         RankSumWeights = rsw(len(IndCorrGood))
         NormedWeights = sum(ValidBins * np.array(RankSumWeights))
 
-        score = sum(IndCorrGood.values * np.array(RankSumWeights)) / NormedWeights # noqa: PD011
+        score = sum(IndCorrGood.values * np.array(RankSumWeights)) / NormedWeights  # noqa: PD011
         pws_indcorr_score_list.append(score)
 
     result = indicator_correlation_matrix.to_dataset(name="indcorr")

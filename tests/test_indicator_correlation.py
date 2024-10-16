@@ -49,3 +49,39 @@ def test_indicator_correlation_raise():
             np.array([-1, 0, 1]),
             prob=0.5,
         )
+
+    with pytest.raises(ValueError, match="`a_dataset` has to be a 1D numpy.ndarray"):
+        pyqc.calc_indicator_correlation(
+            np.array([[1, 0, 1], [1, 1, 1]]),
+            np.array([-1, 0, 1]),
+            prob=0.5,
+        )
+
+    with pytest.raises(
+        ValueError, match="`a_dataset` and `b_dataset` have to have the same shape"
+    ):
+        pyqc.calc_indicator_correlation(
+            np.array([1, 0, 1, 1]),
+            np.array([-1, 0, 1]),
+            prob=0.5,
+        )
+
+    npt.assert_almost_equal(
+        pyqc.calc_indicator_correlation(
+            np.array([np.nan, 1, 1]),
+            np.array([1, np.nan, 1]),
+            prob=0.5,
+            min_valid_overlap=2,
+        ),
+        np.nan,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="No overlapping data. Define `min_valid_overlap` to return NaN in such cases.",
+    ):
+        pyqc.calc_indicator_correlation(
+            np.array([np.nan, np.nan]),
+            np.array([np.nan, 1]),
+            prob=0.5,
+        )

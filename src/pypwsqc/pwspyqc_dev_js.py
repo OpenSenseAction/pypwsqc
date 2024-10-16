@@ -28,6 +28,10 @@ def calc_indicator_correlation(
         msg = "`a_dataset` and `b_dataset` have to have the same shape"
         raise ValueError(msg)
 
+    if (a_dataset < 0).any() or (b_dataset < 0).any():
+        msg = "input arrays must not contain negative values"
+        raise ValueError(msg)
+
     a_dataset = np.copy(a_dataset)
     b_dataset = np.copy(b_dataset)
 

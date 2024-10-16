@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.testing as npt
+import pytest
 
 import pypwsqc.pwspyqc_dev_js as pyqc
 
@@ -29,9 +30,22 @@ def test_indicator_correlation():
     )
 
 
-# def test_indicator_correlation_raise():
-#     with pytest.raises(ValueError, match="input arrays must not contain negative values"):
-#         pyqc.calc_indicator_correlation(
-#             np.array([-1, 0, 1]),
-#             np.array([-1, 0, 1]),
-#         )
+def test_indicator_correlation_raise():
+    # test with dataset a having negative values
+    with pytest.raises(
+        ValueError, match="input arrays must not contain negative values"
+    ):
+        pyqc.calc_indicator_correlation(
+            np.array([-1, -1, 1]),
+            np.array([1, 0, 1]),
+            prob=0.5,
+        )
+    # test with dataset b having negative values
+    with pytest.raises(
+        ValueError, match="input arrays must not contain negative values"
+    ):
+        pyqc.calc_indicator_correlation(
+            np.array([1, 0, 1]),
+            np.array([-1, 0, 1]),
+            prob=0.5,
+        )

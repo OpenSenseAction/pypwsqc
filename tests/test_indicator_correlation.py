@@ -7,16 +7,16 @@ import pypwsqc.pwspyqc_dev_js as pyqc
 def test_indicator_correlation():
     rng = np.random.default_rng()
     x = np.abs(rng.standard_normal(100))
-    assert pyqc.calc_indicator_correlation(x, x, prob=0.1) == 1.0
-    assert pyqc.calc_indicator_correlation(x, x * 0.7, prob=0.1) == 1.0
+    npt.assert_almost_equal(pyqc.calc_indicator_correlation(x, x, prob=0.1), 1.0)
+    npt.assert_almost_equal(pyqc.calc_indicator_correlation(x, x * 0.7, prob=0.1), 1.0)
 
-    assert (
+    npt.assert_almost_equal(
         pyqc.calc_indicator_correlation(
             np.array([0, 1, 2, 3]),
             np.array([0, 2, 1, 4]),
             prob=0.75,
-        )
-        == 1.0
+        ),
+        1.0,
     )
 
     npt.assert_almost_equal(

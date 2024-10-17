@@ -65,7 +65,7 @@ def _indicator_correlation(
     return cc  # noqa: RET504
 
 
-def calc_indic_corr_all_stns(
+def indicator_distance_matrix(
     da_a,
     da_b,
     max_distance=50000,  # this is in meters, assuming the projection units are also meters # noqa: E501
@@ -73,7 +73,7 @@ def calc_indic_corr_all_stns(
     exclude_nan=True,
     min_valid_overlap=None,
 ):
-    """Calculate indicator correlation between reference and test stations.
+    """Calculate indicator correlation and distance between reference and test stations.
 
     return: indicator correlation and distance values
 
@@ -118,7 +118,7 @@ def calc_indic_corr_all_stns(
     return da_dist_mtx, da_indcorr_mtx
 
 
-def indicator_correlation_filter(
+def ic_filter(
     indicator_correlation_matrix_ref,
     distance_correlation_matrix_ref,
     indicator_correlation_matrix,

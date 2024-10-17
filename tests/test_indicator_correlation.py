@@ -116,7 +116,7 @@ def test_calc_indic_corr_all_stns():
         target_projection="EPSG:25832",
     )
 
-    dist_mtx, ind_corr_mtx = pyqc.calc_indic_corr_all_stns(
+    dist_mtx, ind_corr_mtx = pyqc.indicator_distance_matrix(
         ds_a.rainfall,
         ds_a.rainfall,
         max_distance=30e3,
@@ -141,7 +141,7 @@ def test_indicator_correlation_filter():
     )
 
     ds_a = ds_a.drop_sel(id="3")
-    dist1, ind1 = pyqc.calc_indic_corr_all_stns(
+    dist1, ind1 = pyqc.indicator_distance_matrix(
         ds_a.rainfall,
         ds_a.rainfall,
         max_distance=30e3,
@@ -156,7 +156,7 @@ def test_indicator_correlation_filter():
     )
     ds_b.rainfall.data[0, ds_b.rainfall.isel(id=0) > quantile] = 0
 
-    dist2, ind2 = pyqc.calc_indic_corr_all_stns(
+    dist2, ind2 = pyqc.indicator_distance_matrix(
         ds_a.rainfall,
         ds_b.rainfall,
         max_distance=30e3,
@@ -164,7 +164,7 @@ def test_indicator_correlation_filter():
         min_valid_overlap=2 * 24 * 30,
     )
 
-    indcorr_results_orig = pyqc.indicator_correlation_filter(
+    indcorr_results_orig = pyqc.ic_filter(
         indicator_correlation_matrix_ref=ind1,
         distance_correlation_matrix_ref=dist1,
         indicator_correlation_matrix=ind1,
@@ -176,7 +176,7 @@ def test_indicator_correlation_filter():
         threshold=0.05,
     )
 
-    indcorr_results_manip = pyqc.indicator_correlation_filter(
+    indcorr_results_manip = pyqc.ic_filter(
         indicator_correlation_matrix_ref=ind1,
         distance_correlation_matrix_ref=dist1,
         indicator_correlation_matrix=ind2,

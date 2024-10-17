@@ -4,17 +4,17 @@ import poligrain as plg
 import pytest
 import xarray as xr
 
-import pypwsqc.indicator_correlation as pyqc
+import pypwsqc.indicator_correlation as ic
 
 
 def test_indicator_correlation():
     rng = np.random.default_rng()
     x = np.abs(rng.standard_normal(100))
-    npt.assert_almost_equal(pyqc._indicator_correlation(x, x, prob=0.1), 1.0)
-    npt.assert_almost_equal(pyqc._indicator_correlation(x, x * 0.7, prob=0.1), 1.0)
+    npt.assert_almost_equal(ic._indicator_correlation(x, x, prob=0.1), 1.0)
+    npt.assert_almost_equal(ic._indicator_correlation(x, x * 0.7, prob=0.1), 1.0)
 
     npt.assert_almost_equal(
-        pyqc._indicator_correlation(
+        ic._indicator_correlation(
             np.array([0, 1, 2, 3]),
             np.array([0, 2, 1, 4]),
             prob=0.75,
@@ -23,7 +23,7 @@ def test_indicator_correlation():
     )
 
     npt.assert_almost_equal(
-        pyqc._indicator_correlation(
+        ic._indicator_correlation(
             np.array([0, 1, 2, 3]),
             np.array([0, 1, 2, 1]),
             prob=0.75,
@@ -37,7 +37,7 @@ def test_indicator_correlation_raise():
     with pytest.raises(
         ValueError, match="input arrays must not contain negative values"
     ):
-        pyqc._indicator_correlation(
+        ic._indicator_correlation(
             np.array([-1, -1, 1]),
             np.array([1, 0, 1]),
             prob=0.5,
@@ -46,14 +46,14 @@ def test_indicator_correlation_raise():
     with pytest.raises(
         ValueError, match="input arrays must not contain negative values"
     ):
-        pyqc._indicator_correlation(
+        ic._indicator_correlation(
             np.array([1, 0, 1]),
             np.array([-1, 0, 1]),
             prob=0.5,
         )
 
     with pytest.raises(ValueError, match="`a_dataset` has to be a 1D numpy.ndarray"):
-        pyqc._indicator_correlation(
+        ic._indicator_correlation(
             np.array([[1, 0, 1], [1, 1, 1]]),
             np.array([-1, 0, 1]),
             prob=0.5,
@@ -62,14 +62,14 @@ def test_indicator_correlation_raise():
     with pytest.raises(
         ValueError, match="`a_dataset` and `b_dataset` have to have the same shape"
     ):
-        pyqc._indicator_correlation(
+        ic._indicator_correlation(
             np.array([1, 0, 1, 1]),
             np.array([-1, 0, 1]),
             prob=0.5,
         )
 
     npt.assert_almost_equal(
-        pyqc._indicator_correlation(
+        ic._indicator_correlation(
             np.array([np.nan, 1, 1]),
             np.array([1, np.nan, 1]),
             prob=0.5,
@@ -82,7 +82,7 @@ def test_indicator_correlation_raise():
         ValueError,
         match="No overlapping data. Define `min_valid_overlap` to return NaN in such cases.",
     ):
-        pyqc._indicator_correlation(
+        ic._indicator_correlation(
             np.array([np.nan, np.nan]),
             np.array([np.nan, 1]),
             prob=0.5,
@@ -116,7 +116,7 @@ def test_calc_indic_corr_all_stns():
         target_projection="EPSG:25832",
     )
 
-    dist_mtx, ind_corr_mtx = pyqc.indicator_distance_matrix(
+    dist_mtx, ind_corr_mtx = ic.indicator_distance_matrix(
         ds_a.rainfall,
         ds_a.rainfall,
         max_distance=30e3,
@@ -141,7 +141,7 @@ def test_indicator_correlation_filter():
     )
 
     ds_a = ds_a.drop_sel(id="3")
-    dist1, ind1 = pyqc.indicator_distance_matrix(
+    dist1, ind1 = ic.indicator_distance_matrix(
         ds_a.rainfall,
         ds_a.rainfall,
         max_distance=30e3,
@@ -156,7 +156,7 @@ def test_indicator_correlation_filter():
     )
     ds_b.rainfall.data[0, ds_b.rainfall.isel(id=0) > quantile] = 0
 
-    dist2, ind2 = pyqc.indicator_distance_matrix(
+    dist2, ind2 = ic.indicator_distance_matrix(
         ds_a.rainfall,
         ds_b.rainfall,
         max_distance=30e3,
@@ -164,7 +164,7 @@ def test_indicator_correlation_filter():
         min_valid_overlap=2 * 24 * 30,
     )
 
-    indcorr_results_orig = pyqc.ic_filter(
+    indcorr_results_orig = ic.ic_filter(
         indicator_correlation_matrix_ref=ind1,
         distance_correlation_matrix_ref=dist1,
         indicator_correlation_matrix=ind1,
@@ -176,7 +176,7 @@ def test_indicator_correlation_filter():
         threshold=0.05,
     )
 
-    indcorr_results_manip = pyqc.ic_filter(
+    indcorr_results_manip = ic.ic_filter(
         indicator_correlation_matrix_ref=ind1,
         distance_correlation_matrix_ref=dist1,
         indicator_correlation_matrix=ind2,

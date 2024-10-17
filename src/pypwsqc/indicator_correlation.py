@@ -6,7 +6,7 @@ import tqdm
 import xarray as xr
 
 
-def indicator_correlation(
+def _indicator_correlation(
     a_dataset, b_dataset, prob, exclude_nan=True, min_valid_overlap=None
 ):
     """Calculate indicator correlation two datasets.
@@ -92,7 +92,7 @@ def calc_indic_corr_all_stns(
                 ts_b = da_b.isel(id=j)
                 ts_b = ts_b.reindex({"time": ts_a.time})
 
-                indcorr_mtx[i, j] = indicator_correlation(
+                indcorr_mtx[i, j] = _indicator_correlation(
                     ts_a.data,
                     ts_b.data,
                     prob=prob,

@@ -4,17 +4,17 @@ import poligrain as plg
 import pytest
 import xarray as xr
 
-import pypwsqc.pwspyqc_dev_js as pyqc
+import pypwsqc.indicator_correlation as pyqc
 
 
 def test_indicator_correlation():
     rng = np.random.default_rng()
     x = np.abs(rng.standard_normal(100))
-    npt.assert_almost_equal(pyqc.indicator_correlation(x, x, prob=0.1), 1.0)
-    npt.assert_almost_equal(pyqc.indicator_correlation(x, x * 0.7, prob=0.1), 1.0)
+    npt.assert_almost_equal(pyqc._indicator_correlation(x, x, prob=0.1), 1.0)
+    npt.assert_almost_equal(pyqc._indicator_correlation(x, x * 0.7, prob=0.1), 1.0)
 
     npt.assert_almost_equal(
-        pyqc.indicator_correlation(
+        pyqc._indicator_correlation(
             np.array([0, 1, 2, 3]),
             np.array([0, 2, 1, 4]),
             prob=0.75,
@@ -23,7 +23,7 @@ def test_indicator_correlation():
     )
 
     npt.assert_almost_equal(
-        pyqc.indicator_correlation(
+        pyqc._indicator_correlation(
             np.array([0, 1, 2, 3]),
             np.array([0, 1, 2, 1]),
             prob=0.75,
@@ -37,7 +37,7 @@ def test_indicator_correlation_raise():
     with pytest.raises(
         ValueError, match="input arrays must not contain negative values"
     ):
-        pyqc.indicator_correlation(
+        pyqc._indicator_correlation(
             np.array([-1, -1, 1]),
             np.array([1, 0, 1]),
             prob=0.5,
@@ -46,14 +46,14 @@ def test_indicator_correlation_raise():
     with pytest.raises(
         ValueError, match="input arrays must not contain negative values"
     ):
-        pyqc.indicator_correlation(
+        pyqc._indicator_correlation(
             np.array([1, 0, 1]),
             np.array([-1, 0, 1]),
             prob=0.5,
         )
 
     with pytest.raises(ValueError, match="`a_dataset` has to be a 1D numpy.ndarray"):
-        pyqc.indicator_correlation(
+        pyqc._indicator_correlation(
             np.array([[1, 0, 1], [1, 1, 1]]),
             np.array([-1, 0, 1]),
             prob=0.5,
@@ -62,14 +62,14 @@ def test_indicator_correlation_raise():
     with pytest.raises(
         ValueError, match="`a_dataset` and `b_dataset` have to have the same shape"
     ):
-        pyqc.indicator_correlation(
+        pyqc._indicator_correlation(
             np.array([1, 0, 1, 1]),
             np.array([-1, 0, 1]),
             prob=0.5,
         )
 
     npt.assert_almost_equal(
-        pyqc.indicator_correlation(
+        pyqc._indicator_correlation(
             np.array([np.nan, 1, 1]),
             np.array([1, np.nan, 1]),
             prob=0.5,
@@ -82,7 +82,7 @@ def test_indicator_correlation_raise():
         ValueError,
         match="No overlapping data. Define `min_valid_overlap` to return NaN in such cases.",
     ):
-        pyqc.indicator_correlation(
+        pyqc._indicator_correlation(
             np.array([np.nan, np.nan]),
             np.array([np.nan, 1]),
             prob=0.5,

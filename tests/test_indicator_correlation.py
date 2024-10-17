@@ -150,9 +150,9 @@ def test_indicator_correlation_filter():
     )
 
     ds_b = xr.DataArray.copy(ds_a)
-    # calculate x-quantile fpr manipulating data
+    # calculate x-quantile for manipulating data
     quantile = (
-        ds_b.isel(id=0).rainfall.quantile([0.98], dim="time", method="linear").values
+        ds_b.isel(id=0).rainfall.quantile([0.98], dim="time", method="linear").data
     )
     ds_b.rainfall.data[0, ds_b.rainfall.isel(id=0) > quantile] = 0
 
@@ -190,5 +190,4 @@ def test_indicator_correlation_filter():
 
     npt.assert_almost_equal(indcorr_results_orig.indcorr_good.sum(), 19)
     npt.assert_almost_equal(indcorr_results_manip.indcorr_good.sum(), 18)
-    assert indcorr_results_manip.indcorr_good.data[0] == False
-    # if not indcorr_results_manip.indcorr_good.data[0]:
+    assert indcorr_results_manip.indcorr_good.data[0] == False  # noqa: E712

@@ -13,9 +13,24 @@ def _indicator_correlation(
 
     Parameters
     ----------
-    a_dataset: first data vector
-    b_dataset: second data vector
-    perc: percentile threshold
+    a_dataset : xr.Dataset
+        First data vector, has to be in the OpensSense data format standards [1]
+    b_dataset : xr.Dataset
+        Second data vector, has to be in the OpensSense data format standards [1]
+    perc : float
+        Percentile threshold
+    exclude_nan : bool
+        Default True, exculdes pairs where a least one value is NaN
+    min_valid_overlap : int
+        Minimum number of overlapping data for calculating the indicator correlation
+
+
+    Literature
+    ----------
+    [1] Fencl M, Nebuloni R, C. M. Andersson J et al. Data formats and standards for
+    opportunistic rainfall sensors [version 2; peer review: 2 approved].
+    Open Res Europe 2024, 3:169 (https://doi.org/10.12688/openreseurope.16068.2)
+
 
     Returns
     -------

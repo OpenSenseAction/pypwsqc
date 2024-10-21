@@ -34,7 +34,7 @@ def _indicator_correlation(
 
     Returns
     -------
-    indicator correlation value
+    indicator correlation values
     """
     if len(a_dataset.shape) != 1:
         msg = "`a_dataset` has to be a 1D numpy.ndarray"
@@ -90,7 +90,24 @@ def indicator_distance_matrix(
 ):
     """Calculate indicator correlation and distance between reference and test stations.
 
-    return: indicator correlation and distance values
+    Parameters
+    ----------
+    da_a : xr.Dataset
+        First data vector, has to be in the OpensSense data format standards [1]
+    da_b : xr.Dataset
+        Second data vector, has to be in the OpensSense data format standards [1]
+    max_distance : int
+        Maximun distance in meters for which the indicator correlation is returned
+    prob : float
+        Percentile threshold for indicator correlation
+    exclude_nan : bool
+        Default True, exculdes pairs where a least one value is NaN
+    min_valid_overlap : int
+        Minimum number of overlapping data for calculating the indicator correlation
+
+    Returns
+    -------
+    indicator correlation and distance matrices
 
     """
     xy_a = list(zip(da_a.x.data, da_a.y.data, strict=False))
@@ -144,7 +161,7 @@ def ic_filter(
     quantile_bin_pws=0.5,
     threshold=0.01,
 ):
-    """Apply indicator correlation filter.
+    """Apply indicator correlation filter [1].
 
     Parameters
     ----------
@@ -169,6 +186,12 @@ def ic_filter(
     threshold: float
         Indicator correlation threshold below `quantile_bin_ref` where PWS are
         still accepted
+
+    Literature
+    ----------
+    [1] Bárdossy, A., Seidel, J., and El Hachem, A.: The use of personal weather station 
+    observations to improve precipitation estimation and interpolation, 
+    Hydrol. Earth Syst. Sci., 25, 583–601, https://doi.org/10.5194/hess-25-583-2021, 2021. 
 
     Returns
     -------

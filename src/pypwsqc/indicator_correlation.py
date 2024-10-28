@@ -13,28 +13,21 @@ def _indicator_correlation(
 
     Parameters
     ----------
-    a_dataset : xr.Dataset
-        First data vector, has to be in the OpensSense data format standards [1]
-    b_dataset : xr.Dataset
-        Second data vector, has to be in the OpensSense data format standards [1]
+    a_dataset : np.array
+        First data vector
+    b_dataset : np.array
+        Second data vector
     perc : float
         Percentile threshold
     exclude_nan : bool
         Default True, exculdes pairs where a least one value is NaN
     min_valid_overlap : int
-        Minimum number of overlapping data for calculating the indicator correlation
-
-
-    Literature
-    ----------
-    [1] Fencl M, Nebuloni R, C. M. Andersson J et al. Data formats and standards for
-    opportunistic rainfall sensors [version 2; peer review: 2 approved].
-    Open Res Europe 2024, 3:169 (https://doi.org/10.12688/openreseurope.16068.2)
-
+        Minimum number of required overlapping data for calculating the
+        indicator correlation
 
     Returns
     -------
-    indicator correlation values
+    indicator correlation values [np.array]
     """
     if len(a_dataset.shape) != 1:
         msg = "`a_dataset` has to be a 1D numpy.ndarray"
@@ -92,10 +85,12 @@ def indicator_distance_matrix(
 
     Parameters
     ----------
-    da_a : xr.Dataset
+    da_a : xr.DataArray
         First data vector, has to be in the OpensSense data format standards [1]
-    da_b : xr.Dataset
+        with rainfall as variable
+    da_b : xr.DataArray
         Second data vector, has to be in the OpensSense data format standards [1]
+        with rainfall as variable
     max_distance : int
         Maximum distance in meters for which the indicator correlation is returned
     prob : float
@@ -113,7 +108,7 @@ def indicator_distance_matrix(
 
     Returns
     -------
-    indicator correlation and distance matrices
+    Indicator correlation and distance matrices as tuple [xr.DataArray, xr.DataArray]
 
     """
     xy_a = list(zip(da_a.x.data, da_a.y.data, strict=False))
@@ -167,7 +162,10 @@ def ic_filter(
     quantile_bin_pws=0.5,
     threshold=0.01,
 ):
-    """Apply indicator correlation filter [1].
+    """Apply indicator correlation filter.
+
+    This function applies a modified version of the indicator correlation filter from
+    Bárdossy el al. (2021). [1]
 
     Parameters
     ----------
@@ -202,10 +200,10 @@ def ic_filter(
 
     Returns
     -------
-    distance matrix between PWS and reference stations
-    indicator correlation matrix between PWS and reference stations
-    boolean if station got accepted
-    indicator correlation score
+    distance matrix between PWS and reference stations [xr.DataArray]
+    indicator correlation matrix between PWS and reference stations [xr.DataArray]
+    boolean if station got accepted [xr.DataArray]
+    indicator correlation score [xr.DataArray]
     """
     bins = np.arange(0, max_distance, bin_size)
 

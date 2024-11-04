@@ -162,7 +162,7 @@ def ic_filter(
     quantile_bin_pws=0.5,
     threshold=0.01,
 ):
-    """Apply indicator correlation filter.
+    """Apply indicator correlation filter [1].
 
     This function applies a modified version of the indicator correlation filter from
     Bárdossy el al. (2021). [1]

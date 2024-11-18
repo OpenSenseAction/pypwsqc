@@ -14,14 +14,17 @@
 
 ### New features
 
-- Implementation of indicator correlation filter by @JochenSeidel in https://github.com/OpenSenseAction/pypwsqc/pull/34
+- Implementation of indicator correlation filter by @JochenSeidel
+  in https://github.com/OpenSenseAction/pypwsqc/pull/34
 
 ### Bug fixes
 
 ### Maintenance
 
-- remove package version capping by @cchwala in https://github.com/OpenSenseAction/pypwsqc/pull/35
-- Update Docstrings for IC Filter by @JochenSeidel in https://github.com/OpenSenseAction/pypwsqc/pull/37
+- remove package version capping by @cchwala in
+  https://github.com/OpenSenseAction/pypwsqc/pull/35
+- Update Docstrings for IC Filter by @JochenSeidel in
+  https://github.com/OpenSenseAction/pypwsqc/pull/37
 
 ### Breaking changes
 

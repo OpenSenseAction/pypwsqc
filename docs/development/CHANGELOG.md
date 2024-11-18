@@ -14,8 +14,8 @@
 
 ### New features
 
-- Implementation of indicator correlation filter by @JochenSeidel
-  in https://github.com/OpenSenseAction/pypwsqc/pull/34
+- Implementation of indicator correlation filter by @JochenSeidel in
+  https://github.com/OpenSenseAction/pypwsqc/pull/34
 
 ### Bug fixes
 

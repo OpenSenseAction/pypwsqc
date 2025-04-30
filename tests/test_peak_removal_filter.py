@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 
-import peak_removal_filter as prf
+import pypwsqc.peak_removal_filter as prf
 
 
 def create_test_ds():

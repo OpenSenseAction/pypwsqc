@@ -6,7 +6,7 @@ import xarray as xr
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
-import peak_removal_filter_plots as prfp
+import pypwsqc.peak_removal_filter_plots as prfp
 
 mpl.use("Agg")
 

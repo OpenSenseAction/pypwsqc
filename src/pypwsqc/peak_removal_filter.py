@@ -243,8 +243,8 @@ def inverse_distance_weighting(closest_neighbors):
         # calculate the weights
         x = 1 / distances**2
         y = (1 / distances**2).sum()
-        W = x / y
-        weights_lst.append(W)
+        weight = x / y
+        weights_lst.append(weight)
     # convert the list of weights to a DataArray
     weights = np.array(weights_lst)
     return xr.DataArray(

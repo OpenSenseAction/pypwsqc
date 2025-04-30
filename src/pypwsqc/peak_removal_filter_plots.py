@@ -292,31 +292,29 @@ def plot_peak(
         name_plot = f"{name_plot_1} {name_plot_2}"
 
     # plot the time series
-    markerline, stemlines, baseline = ax.stem(x, y, markerfmt="o", basefmt=" ")
-    plt.setp(markerline, color="blue", markersize=2.5)
-    plt.setp(stemlines, color="blue")
+    ax.stem(x, y, markerfmt="o", linefmt="blue", basefmt=" ").markerline.set_markersize(
+        2.5
+    )
 
     # plot the leading nan sequence/the distributed peak values for the nan sequence
-    markerline, stemlines, baseline = ax.stem(
-        x_nan_seq, y_nan_seq, markerfmt="o", basefmt=" "
-    )
     if y_peak == y_peak_orig:
-        plt.setp(markerline, color="red", markersize=2.5)
-        plt.setp(stemlines, color="red")
+        ax.stem(
+            x_nan_seq, y_nan_seq, markerfmt="o", linefmt="red", basefmt=" "
+        ).markerline.set_markersize(2.5)
     else:
-        plt.setp(markerline, color="lime", markersize=2.5)
-        plt.setp(stemlines, color="lime")
+        ax.stem(
+            x_nan_seq, y_nan_seq, markerfmt="o", linefmt="lime", basefmt=" "
+        ).markerline.set_markersize(2.5)
 
     # plot the peak/the new value
-    markerline, stemlines, baseline = ax.stem(
-        x_peak, y_peak, markerfmt="o", basefmt=" "
-    )
     if y_peak == y_peak_orig:
-        plt.setp(markerline, color="red", markersize=2.5)
-        plt.setp(stemlines, color="red")
+        ax.stem(
+            x_peak, y_peak, markerfmt="o", linefmt="red", basefmt=" "
+        ).markerline.set_markersize(2.5)
     else:
-        plt.setp(markerline, color="lime", markersize=2.5)
-        plt.setp(stemlines, color="lime")
+        ax.stem(
+            x_peak, y_peak, markerfmt="o", linefmt="lime", basefmt=" "
+        ).markerline.set_markersize(2.5)
 
     # mark other peaks/remaining or corrected peaks
     for time_peak_other, x_nan_seq_other, y_nan_seq_other in zip(
@@ -332,24 +330,33 @@ def plot_peak(
                 y_peak_other_corr = data_corr.sel(
                     id=station, time=time_peak_other
                 ).rainfall.to_numpy()
-                markerline, stemlines, baseline = ax.stem(
-                    x_nan_seq_other, y_nan_seq_other, markerfmt="o", basefmt=" "
-                )
                 if (
                     y_peak_other == y_peak_other_corr
                 ):  # check if the peak is corrected --> green, if not --> orange
-                    plt.setp(markerline, color="orange", markersize=2.5)
-                    plt.setp(stemlines, color="orange")
+                    ax.stem(
+                        x_nan_seq_other,
+                        y_nan_seq_other,
+                        markerfmt="o",
+                        linefmt="orange",
+                        basefmt=" ",
+                    ).markerline.set_markersize(2.5)
                 else:
-                    plt.setp(markerline, color="green", markersize=2.5)
-                    plt.setp(stemlines, color="green")
+                    ax.stem(
+                        x_nan_seq_other,
+                        y_nan_seq_other,
+                        markerfmt="o",
+                        linefmt="green",
+                        basefmt=" ",
+                    ).markerline.set_markersize(2.5)
             else:
                 # plot other peaks
-                markerline, stemlines, baseline = ax.stem(
-                    time_peak_other, y_peak_other, markerfmt="o", basefmt=" "
-                )
-                plt.setp(markerline, color="orange", markersize=2.5)
-                plt.setp(stemlines, color="orange")
+                ax.stem(
+                    time_peak_other,
+                    y_peak_other,
+                    markerfmt="o",
+                    linefmt="orange",
+                    basefmt=" ",
+                ).markerline.set_markersize(2.5)
         else:
             continue
 

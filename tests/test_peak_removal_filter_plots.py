@@ -1681,12 +1681,12 @@ def test_plot_station_neighbors():
     # Assert (check)
     assert figure_bool is True, "Figure is not a Figure object"
     assert axes_bool is True, "Axes is not an Axes object"
-    assert figsize[0] == np.array([10.0, 4.0])[0], "Figure size is not correct"
+    assert figsize[0] == np.array([6.4, 4.8])[0], "Figure size is not correct"
     assert title == "Neighbors of station test_station", "Title is not correct"
     assert xlabel == "longitude", "X label is not correct"
     assert ylabel == "latitude", "Y label is not correct"
-    assert xlim == (np.float64(-3.0), np.float64(5.0)), "Xlim is not correct"
-    assert ylim == (np.float64(-3.0), np.float64(5.0)), "Ylim is not correct"
+    assert xlim == (np.float64(-5.0), np.float64(7.0)), "Xlim is not correct"
+    assert ylim == (np.float64(-5.0), np.float64(7.0)), "Ylim is not correct"
     assert (
         facecolor[0][0] == np.array([0.0, 0.0, 1.0, 0.5])[0]
     ), "Facecolor is not correct"
@@ -1738,7 +1738,7 @@ def test_plot_station_neighbors_neighbor_is_None_and_zoom_false():
     # Assert (check)
     assert figure_bool is True, "Figure is not a Figure object"
     assert axes_bool is True, "Axes is not an Axes object"
-    assert figsize[0] == np.array([10.0, 4.0])[0], "Figure size is not correct"
+    assert figsize[0] == np.array([6.4, 4.8])[0], "Figure size is not correct"
     assert title == "Neighbors of station test_station", "Title is not correct"
     assert xlabel == "longitude", "X label is not correct"
     assert ylabel == "latitude", "Y label is not correct"

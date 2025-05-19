@@ -72,8 +72,10 @@ def get_nan_sequences(dataset, station, quantile):
     data = dataset.sel(id=station).rainfall
     # get the threshold for the peaks and set time between measurements
     threshold = np.nanquantile(data, quantile)
-    timegap = np.timedelta64(5, "m")
-    # get the peaks
+    timegap = int(
+        (data.time.to_numpy()[1] - data.time.to_numpy()[0]) / np.timedelta64(1, "m")
+    )
+    timedelta = np.timedelta64(timegap, "m")  # get the peaks
     peaks = data.where(data > threshold, drop=True)
 
     time_peak_lst = []
@@ -88,25 +90,25 @@ def get_nan_sequences(dataset, station, quantile):
         # start from the end of the potential nan sequence and go backwards as long as
         # value is nan.
         for value in reversed(
-            data.sel(time=slice(None, time_peak - timegap)).isnull().to_numpy()
+            data.sel(time=slice(None, time_peak - timedelta)).isnull().to_numpy()
         ):
             if value:
                 length += 1
             elif length > 0:
-                seq_start = time_peak - (timegap * length)
+                seq_start = time_peak - (timedelta * length)
                 time_peak_lst.append(time_peak)
                 seq_start_lst.append(seq_start)
-                seq_end_lst.append(time_peak - timegap)
+                seq_end_lst.append(time_peak - timedelta)
                 seq_len_lst.append(length)
                 length = 0
                 break
             else:
                 break
         if length > 0:
-            seq_start = time_peak - (timegap * length)
+            seq_start = time_peak - (timedelta * length)
             time_peak_lst.append(time_peak)
             seq_start_lst.append(seq_start)
-            seq_end_lst.append(time_peak - timegap)
+            seq_end_lst.append(time_peak - timedelta)
             seq_len_lst.append(length)
     return time_peak_lst, seq_start_lst, seq_end_lst, seq_len_lst
 

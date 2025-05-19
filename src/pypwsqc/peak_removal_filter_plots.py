@@ -3,7 +3,6 @@
 # import packages
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.patches import Circle
 
@@ -52,25 +51,24 @@ def plot_station_neighbors(
     x_station = a_dataset.sel(id=station).x.to_numpy()
     y_station = a_dataset.sel(id=station).y.to_numpy()
 
-    # get the x and y coordinates of all stations
+    # get the x and y coordinates of all stations and get the neighbors of the station
     x = a_dataset.x.to_numpy()
     y = a_dataset.y.to_numpy()
-    x_ref = b_dataset.x.to_numpy()
-    y_ref = b_dataset.y.to_numpy()
-
-    # get the neighbors of the station
     aa_neighbor = aa_closest_neighbors.sel(id=station).neighbor_id.to_numpy()
-    ab_neigbors = ab_closest_neighbors.sel(id=station).neighbor_id.to_numpy()
+    if b_dataset is not None:
+        x_ref = b_dataset.x.to_numpy()
+        y_ref = b_dataset.y.to_numpy()
+        ab_neigbors = ab_closest_neighbors.sel(id=station).neighbor_id.to_numpy()
 
     s = 10 if zoom else 2
 
     # plot all pws stations and reference stations
-    fig, ax = plt.subplots(figsize=(10, 4), dpi=200)
+    fig, ax = plt.subplots(dpi=150)
     plt.scatter(x=x, y=y, s=s, color="blue", alpha=0.5)
-    plt.scatter(x=x_ref, y=y_ref, s=s, color="black", alpha=0.5)
+    if b_dataset is not None:
+        plt.scatter(x=x_ref, y=y_ref, s=s, color="black", alpha=0.5)
 
-    # highlight the neighbors of the station
-    for neighbor, neighbor_ref in zip(aa_neighbor, ab_neigbors, strict=False):
+    for neighbor in aa_neighbor:
         if neighbor is None:
             continue
         plt.scatter(
@@ -80,15 +78,17 @@ def plot_station_neighbors(
             color="lime",
             alpha=0.5,
         )
-        if neighbor_ref is None:
-            continue
-        plt.scatter(
-            b_dataset.sel(id=neighbor_ref).x.to_numpy(),
-            b_dataset.sel(id=neighbor_ref).y.to_numpy(),
-            s=s,
-            color="magenta",
-            alpha=0.5,
-        )
+    if b_dataset is not None:
+        for neighbor_ref in ab_neigbors:
+            if neighbor_ref is None:
+                continue
+            plt.scatter(
+                b_dataset.sel(id=neighbor_ref).x.to_numpy(),
+                b_dataset.sel(id=neighbor_ref).y.to_numpy(),
+                s=s,
+                color="magenta",
+                alpha=0.5,
+            )
 
     # highlight the station
     plt.scatter(x_station, y_station, s=s, color="red", label=f"pws station {station}")
@@ -105,67 +105,107 @@ def plot_station_neighbors(
     plt.axis("equal")
 
     # create custom legend
-    custom_legend = [
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="w",
-            markerfacecolor="blue",
-            markersize=4,
-            label="pws network",
-        ),
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="w",
-            markerfacecolor="black",
-            markersize=4,
-            label="reference network",
-        ),
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="w",
-            markerfacecolor="lime",
-            markersize=4,
-            label="pws neighbors",
-        ),
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="w",
-            markerfacecolor="magenta",
-            markersize=4,
-            label="reference neighbors",
-        ),
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="w",
-            markerfacecolor="red",
-            markersize=4,
-            label=f"pws station {station}",
-        ),
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="w",
-            markeredgecolor="black",
-            markeredgewidth=0.5,
-            label="search radius",
-        ),
-    ]
+    if b_dataset is not None:
+        custom_legend = [
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="blue",
+                markersize=4,
+                label="pws network",
+            ),
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="black",
+                markersize=4,
+                label="reference network",
+            ),
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="lime",
+                markersize=4,
+                label="pws neighbors",
+            ),
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="magenta",
+                markersize=4,
+                label="reference neighbors",
+            ),
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="red",
+                markersize=4,
+                label=f"pws station {station}",
+            ),
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markeredgecolor="black",
+                markeredgewidth=0.5,
+                label="search radius",
+            ),
+        ]
+    else:
+        custom_legend = [
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="blue",
+                markersize=4,
+                label="pws network",
+            ),
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="lime",
+                markersize=4,
+                label="pws neighbors",
+            ),
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markerfacecolor="red",
+                markersize=4,
+                label=f"pws station {station}",
+            ),
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                markeredgecolor="black",
+                markeredgewidth=0.5,
+                label="search radius",
+            ),
+        ]
 
     # set zoom scope of the plot
     if zoom:
-        plt.xlim(x_station - max_distance * 2, x_station + max_distance * 2)
-        plt.ylim(y_station - max_distance * 2, y_station + max_distance * 2)
+        plt.xlim(x_station - max_distance * 3, x_station + max_distance * 3)
+        plt.ylim(y_station - max_distance * 3, y_station + max_distance * 3)
 
     name_plot = f"Neighbors of station {station}"
     plt.xlabel("longitude")
@@ -227,13 +267,13 @@ def plot_peak(
         Plot of the rainfall of the station with the (corrected) peaks.
     """
     # set timegap and timegap_plt
-    timegap = np.timedelta64(5, "m")
-    timegap_plt_before = np.timedelta64(5, "m") * seq_len_lst[
-        peak_num
-    ] + zoom_out * np.timedelta64(5, "m")
-    timegap_plt_after = np.timedelta64(5, "m") * seq_len_lst[
-        peak_num
-    ] + zoom_out * np.timedelta64(5, "m")
+    timegap = int(
+        (dataset.time.to_numpy()[1] - dataset.time.to_numpy()[0])
+        / np.timedelta64(1, "m")
+    )
+    timedelta = np.timedelta64(timegap, "m")
+    timegap_plt_before = timedelta * seq_len_lst[peak_num] + zoom_out * timedelta
+    timegap_plt_after = timedelta * seq_len_lst[peak_num] + zoom_out * timedelta
 
     # create time series needed for the plot
     if (
@@ -251,15 +291,15 @@ def plot_peak(
     else:
         end = time_peak_lst[peak_num] + timegap_plt_after
 
-    x = pd.date_range(start, end, freq="5min")
-    x_nan_seq = pd.date_range(
-        start=seq_start_lst[peak_num], end=seq_end_lst[peak_num] + timegap, freq="5min"
+    x = np.arange(start, end + timedelta, timedelta)
+    x_nan_seq = np.arange(
+        seq_start_lst[peak_num], seq_end_lst[peak_num] + timedelta * 2, timedelta
     )  # includes the peak
     x_nan_seq_others = [
-        pd.date_range(start=seq_start, end=seq_end + timegap, freq="5min")
+        np.arange(seq_start, seq_end + timedelta * 2, timedelta)
         for seq_start, seq_end in zip(seq_start_lst, seq_end_lst, strict=False)
     ]  # include the peak
-    x_peak = pd.to_datetime(time_peak_lst[peak_num])
+    x_peak = np.datetime64(time_peak_lst[peak_num])
 
     # get the values of the time series
     y_peak_orig = dataset.sel(id=station, time=x_peak).rainfall.to_numpy()

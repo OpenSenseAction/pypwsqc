@@ -1084,6 +1084,64 @@ def create_test_weights_da_ref():
     )
 
 
+def test_convert_to_utm():
+    # Arrange (setup)
+    start_time = np.datetime64("2025-04-01T00:00:00", "ns")
+    end_time = np.datetime64("2025-04-01T08:00:00", "ns")
+    time = np.arange(start_time, end_time, np.timedelta64(5, "m"))
+
+    index = [
+        "test_station",
+        "test_neighbor_1",
+        "test_neighbor_2",
+        "test_neighbor_3",
+        "test_neighbor_4",
+    ]
+
+    longitude = np.array([9.337699, 9.105562, 9.993434, 9.103393, 9.182794])
+    longitude = longitude.astype(np.float64)
+    latitude = np.array([48.628241, 48.744145, 48.3974, 48.744335, 48.764399])
+    latitude = latitude.astype(np.float64)
+
+    test_ds = xr.Dataset(
+        coords={
+            "id": index,
+            "time": time,
+            "lon": (["id"], longitude),
+            "lat": (["id"], latitude),
+        },
+    )
+    x_expected = np.array(
+        [
+            524883.44425925,
+            507760.54114806,
+            573534.35633562,
+            507601.05538652,
+            513432.95916921,
+        ]
+    )
+    y_expected = np.array(
+        [
+            5386185.46713846,
+            5399019.60369594,
+            5360947.83933791,
+            5399040.50555781,
+            5401281.78784132,
+        ]
+    )
+
+    # Act (execute)
+    test_ds_utm = prf.convert_to_utm(test_ds, "lon", "lat")
+
+    # Assert (check)
+    np.testing.assert_almost_equal(
+        test_ds_utm.x.to_numpy(), x_expected, err_msg="\nThe data is not equal!\n"
+    )
+    np.testing.assert_almost_equal(
+        test_ds_utm.y.to_numpy(), y_expected, err_msg="\nThe data is not equal!\n"
+    )
+
+
 def test_get_closest_neighbors():
     # Arrange (setup)
     test_ds = create_test_ds()

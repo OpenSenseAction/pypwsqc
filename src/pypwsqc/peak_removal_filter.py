@@ -3,7 +3,41 @@
 # import packages
 import numpy as np
 import poligrain as plg
+import pyproj
 import xarray as xr
+
+
+def convert_to_utm(
+    dataset,
+    name_coord_lon,
+    name_coord_lat,
+):
+    """Convert longitude and latitude to UTM32 and add them as x and y coordinates.
+
+    Parameters
+    ----------
+    dataset : xr.Dataset
+        Dataset containing longitude and latitude coordinates.
+    name_coord_lon : str
+        Name of the longitude coordinate in the dataset.
+    name_coord_lat : str
+        Name of the latitude coordinate in the dataset.
+
+    Returns
+    -------
+    xr.Dataset
+        The dataset with added x and y coordinates in UTM32.
+    """
+    lon = dataset[name_coord_lon].to_numpy()
+    lat = dataset[name_coord_lat].to_numpy()
+    P = pyproj.Proj(proj="utm", zone=32, ellps="WGS84", preserve_units=True)
+
+    x, y = P(lon, lat)
+
+    dataset = dataset.assign_coords({"x": (("id"), x), "y": (("id"), y)})
+    dataset.coords["x"].attrs["units"] = "meters utm 32"
+    dataset.coords["y"].attrs["units"] = "meters utm 32"
+    return dataset
 
 
 def get_closest_points_to_point(
@@ -181,7 +215,7 @@ def print_info(
         - 1
     )
 
-    print(f"Station: {station}", "\n")
+    print(f"station: {station}", "\n")
     print(f"max_distance: {max_distance} m")
     print(f"n_closest: {n_closest}")
     print(f"{quantile}-quantile: {_quantile} mm", "\n")

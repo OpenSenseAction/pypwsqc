@@ -1131,7 +1131,7 @@ def test_convert_to_utm():
     )
 
     # Act (execute)
-    test_ds_utm = prf.convert_to_utm(test_ds, "lon", "lat")
+    test_ds_utm = prf.convert_to_utm(test_ds, "lon", "lat", 32)
 
     # Assert (check)
     np.testing.assert_almost_equal(
@@ -1181,7 +1181,7 @@ def test_get_nan_sequences():
     )
 
     # Act (execute)
-    new_data = prf.get_nan_sequences(test_ds, "test_station", 0.95)
+    new_data = prf.get_nan_sequences(test_ds, "test_station", 0.95, 0)
 
     # Assert (check)
     np.testing.assert_almost_equal(

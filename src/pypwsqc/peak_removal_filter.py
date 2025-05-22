@@ -5,14 +5,11 @@ import numpy as np
 import poligrain as plg
 import pyproj
 import xarray as xr
+from tqdm import tqdm
 
 
-def convert_to_utm(
-    dataset,
-    name_coord_lon,
-    name_coord_lat,
-):
-    """Convert longitude and latitude to UTM32 and add them as x and y coordinates.
+def convert_to_utm(dataset, name_coord_lon, name_coord_lat, zone):
+    """Convert lon and lat from WGS84 to UTM (zone) and add them as x and y coordinates.
 
     Parameters
     ----------
@@ -26,17 +23,17 @@ def convert_to_utm(
     Returns
     -------
     xr.Dataset
-        The dataset with added x and y coordinates in UTM32.
+        The dataset with added x and y coordinates in UTM (zone).
     """
     lon = dataset[name_coord_lon].to_numpy()
     lat = dataset[name_coord_lat].to_numpy()
-    P = pyproj.Proj(proj="utm", zone=32, ellps="WGS84", preserve_units=True)
+    P = pyproj.Proj(proj="utm", zone=zone, ellps="WGS84", preserve_units=True)
 
     x, y = P(lon, lat)
 
     dataset = dataset.assign_coords({"x": (("id"), x), "y": (("id"), y)})
-    dataset.coords["x"].attrs["units"] = "meters utm 32"
-    dataset.coords["y"].attrs["units"] = "meters utm 32"
+    dataset.coords["x"].attrs["units"] = f"meters (UTM {zone})"
+    dataset.coords["y"].attrs["units"] = f"meters (UTM {zone})"
     return dataset
 
 
@@ -77,7 +74,7 @@ def get_closest_points_to_point(
     )
 
 
-def get_nan_sequences(dataset, station, quantile):
+def get_nan_sequences(dataset, station, quantile, seq_len_threshold):
     """Find values higher than the threshold and check for leading nan sequences.
 
     If there are leading nan sequences, find the start and end of the sequence and the
@@ -91,6 +88,9 @@ def get_nan_sequences(dataset, station, quantile):
         Name/number of the station.
     quantile : float
         Quantile for the peak determination.
+    seq_len_threshold : int
+        Nan sequence has to be greater than seq_len_threshold to be considered for the
+        peak removal process.
 
     Returns
     -------
@@ -118,7 +118,12 @@ def get_nan_sequences(dataset, station, quantile):
     seq_len_lst = []
 
     # iterate over the peaks and check if there are leading nan sequences
-    for time_peak in peaks.time.to_numpy():
+    for time_peak in tqdm(
+        peaks.time.to_numpy(),
+        desc="Check peaks for leading nans",
+        unit=" peaks",
+        total=len(peaks.time.to_numpy()),
+    ):
         length = 0
         # check if there are leading nan sequences
         # start from the end of the potential nan sequence and go backwards as long as
@@ -128,7 +133,7 @@ def get_nan_sequences(dataset, station, quantile):
         ):
             if value:
                 length += 1
-            elif length > 0:
+            elif length > seq_len_threshold:
                 seq_start = time_peak - (timedelta * length)
                 time_peak_lst.append(time_peak)
                 seq_start_lst.append(seq_start)
@@ -138,7 +143,7 @@ def get_nan_sequences(dataset, station, quantile):
                 break
             else:
                 break
-        if length > 0:
+        if length > seq_len_threshold:
             seq_start = time_peak - (timedelta * length)
             time_peak_lst.append(time_peak)
             seq_start_lst.append(seq_start)
@@ -264,7 +269,12 @@ def inverse_distance_weighting(closest_neighbors):
     """
     weights_lst = []
     # iterate over all stations
-    for station in closest_neighbors.id.to_numpy():
+    for station in tqdm(
+        closest_neighbors.id.to_numpy(),
+        desc="Calculate weights for stations",
+        unit=" stations",
+        total=len(closest_neighbors.id.to_numpy()),
+    ):
         # get the distances of the neighbors
         distances = closest_neighbors.sel(id=station).distance.to_numpy()
         distances[
@@ -350,10 +360,17 @@ def interpolate_precipitation(
         weights = weights_da.sel(id=station).to_numpy()
 
     all_neighbors_seqs = []
-    # list of lists. Each list corresponds to one neighborcontaining his time series
+    # list of lists. Each list corresponds to one neighbor containing his time series
     # with starts and ends of nan sequences of the selected station
     # iterate over all neighbors
-    for neighbor in neighbors:
+    for neighbor in tqdm(
+        neighbors,
+        desc="Get precipitation values from neighbors",
+        unit=" neighbors",
+        total=np.count_nonzero(
+            [neighbors[i] is not None for i in range(len(neighbors))]
+        ),
+    ):
         neighbor_seqs = []
         # list of time series of the neighbor containing his time series with starts
         # and ends of nan sequences of the selected station
@@ -391,7 +408,12 @@ def interpolate_precipitation(
     # list of time series with the interpolated precipitation values for the selected
     # station
     # iterate over all nan sequences of the selected station
-    for i, length in zip(range(len(seq_len_lst)), seq_len_lst, strict=False):
+    for i, length in tqdm(
+        zip(range(len(seq_len_lst)), seq_len_lst, strict=False),
+        desc="Interpolate precipitation values for sequences",
+        unit=" sequences",
+        total=len(seq_len_lst),
+    ):
         useful_station_count = 0
         seq = np.zeros(
             length + 1
@@ -437,7 +459,12 @@ def distribute_peak(dataset, station, time_peak_lst, seqs_lst):
     """
     seqs_corr_lst = []
     # iterate over all peaks (nan sequences) of the selected station
-    for time_peak, seq_num in zip(time_peak_lst, range(len(seqs_lst)), strict=False):
+    for time_peak, seq_num in tqdm(
+        zip(time_peak_lst, range(len(seqs_lst)), strict=False),
+        desc="Distribute peaks",
+        unit=" peaks",
+        total=len(time_peak_lst),
+    ):
         # check if the time series of the selected station is NaN. If so, skip this
         # sequence. This peak will not be distributed/corrected.
         if np.isnan(seqs_lst[seq_num]).any():
@@ -486,8 +513,11 @@ def overwrite_seq(dataset, station, seqs_corr_lst, seq_start_lst, time_peak_lst)
     data_corr.load()
     # iterate over all sequences and overwrite the values of the leading nan sequences
     # and peaks with the corrected values
-    for seq_corr, seq_start, peak in zip(
-        seqs_corr_lst, seq_start_lst, time_peak_lst, strict=False
+    for seq_corr, seq_start, peak in tqdm(
+        zip(seqs_corr_lst, seq_start_lst, time_peak_lst, strict=False),
+        desc="Overwrite sequences",
+        unit=" sequences",
+        total=len(seqs_corr_lst),
     ):
         # check if the time series of the selected station is NaN. If so, do nothing and
         # skip this sequence

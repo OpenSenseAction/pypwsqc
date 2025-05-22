@@ -159,7 +159,7 @@ def plot_station_neighbors(
                 color="w",
                 markeredgecolor="black",
                 markeredgewidth=0.5,
-                label="search radius",
+                label=f"search radius: {max_distance/1000} km",
             ),
         ]
     else:
@@ -198,7 +198,7 @@ def plot_station_neighbors(
                 color="w",
                 markeredgecolor="black",
                 markeredgewidth=0.5,
-                label="search radius",
+                label=f"search radius: {max_distance/1000} km",
             ),
         ]
 

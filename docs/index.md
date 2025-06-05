@@ -17,6 +17,7 @@ installation.md
 
 notebooks/merged_filters.ipynb
 notebooks/indicator_correlation_filter.ipynb
+notebooks/peak_removal_filter.ipynb
 ```
 
 ```{toctree}

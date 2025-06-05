@@ -27,9 +27,9 @@ def convert_to_utm(dataset, name_coord_lon, name_coord_lat, zone):
     """
     lon = dataset[name_coord_lon].to_numpy()
     lat = dataset[name_coord_lat].to_numpy()
-    P = pyproj.Proj(proj="utm", zone=zone, ellps="WGS84", preserve_units=True)
+    projection = pyproj.Proj(proj="utm", zone=zone, ellps="WGS84", preserve_units=True)
 
-    x, y = P(lon, lat)
+    x, y = projection(lon, lat)
 
     dataset = dataset.assign_coords({"x": (("id"), x), "y": (("id"), y)})
     dataset.coords["x"].attrs["units"] = f"meters (UTM {zone})"

@@ -1697,6 +1697,63 @@ def test_plot_station_neighbors():
     assert alpha == 0.5, "Alpha is not correct"
 
 
+def test_plot_station_neighbors_ab_closest_neighbors_is_none():
+    # Arrange (setup)
+    test_ds = create_test_ds()
+    test_ds_ref = None
+    aa_closest_neighbors = create_test_closest_neighbors_ds_ds()
+    ab_closest_neighbors = None
+
+    # Act (execute)
+    with patch("matplotlib.pyplot.show"):
+        fig, ax = prfp.plot_station_neighbors(
+            test_ds,
+            test_ds_ref,
+            "test_station",
+            aa_closest_neighbors,
+            ab_closest_neighbors,
+            2,
+            True,
+        )
+    figure_bool = isinstance(fig, Figure)
+    axes_bool = isinstance(ax, Axes)
+
+    figsize = fig.get_size_inches()
+
+    title = fig.axes[0].get_title()
+
+    xlabel = ax.get_xlabel()
+    ylabel = ax.get_ylabel()
+
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+
+    scatter = ax.collections[0]
+
+    facecolor = scatter.get_facecolor()
+    edgecolor = scatter.get_edgecolor()
+    sizes = scatter.get_sizes()
+    alpha = scatter.get_alpha()
+
+    # Assert (check)
+    assert figure_bool is True, "Figure is not a Figure object"
+    assert axes_bool is True, "Axes is not an Axes object"
+    assert figsize[0] == np.array([6.4, 4.8])[0], "Figure size is not correct"
+    assert title == "Neighbors of station test_station", "Title is not correct"
+    assert xlabel == "longitude", "X label is not correct"
+    assert ylabel == "latitude", "Y label is not correct"
+    assert xlim == (np.float64(-5.0), np.float64(7.0)), "Xlim is not correct"
+    assert ylim == (np.float64(-5.0), np.float64(7.0)), "Ylim is not correct"
+    assert (
+        facecolor[0][0] == np.array([0.0, 0.0, 1.0, 0.5])[0]
+    ), "Facecolor is not correct"
+    assert (
+        edgecolor[0][0] == np.array([0.0, 0.0, 1.0, 0.5])[0]
+    ), "Edgecolor is not correct"
+    assert sizes[0] == 10, "Size is not correct"
+    assert alpha == 0.5, "Alpha is not correct"
+
+
 def test_plot_station_neighbors_neighbor_is_None_and_zoom_false():
     # Arrange (setup)
     test_ds = create_test_ds()

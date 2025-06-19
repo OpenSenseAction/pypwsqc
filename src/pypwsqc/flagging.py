@@ -10,8 +10,10 @@ import xarray as xr
 
 def fz_filter(
     ds_pws: npt.NDArray[np.float64],
+    distance_matrix: npt.NDArray[np.float64],
     nint: npt.NDArray[np.float64],
     n_stat: npt.NDArray[np.float64],
+    max_distance=npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """Faulty Zeros Filter.
 
@@ -43,6 +45,27 @@ def fz_filter(
     npt.NDArray
         time series of flags
     """
+    # calculate support variables
+    if "reference" not in ds_pws:
+        nbrs_not_nan = []
+        reference = []
+        for pws_id in ds_pws.id.data:
+            neighbor_ids = distance_matrix.id.data[
+                (distance_matrix.sel(id=pws_id) < max_distance)
+                & (distance_matrix.sel(id=pws_id) > 0)
+            ]
+
+            N = (
+                ds_pws.rainfall.sel(id=neighbor_ids).notnull().sum(dim="id")
+            )  # noqa: PD004
+            nbrs_not_nan.append(N)
+
+            median = ds_pws.sel(id=neighbor_ids).rainfall.median(dim="id")
+            reference.append(median)
+
+        ds_pws["nbrs_not_nan"] = xr.concat(nbrs_not_nan, dim="id")
+        ds_pws["reference"] = xr.concat(reference, dim="id")
+
     pws_data = ds_pws.rainfall
     nbrs_not_nan = ds_pws.nbrs_not_nan
     reference = ds_pws.reference
@@ -108,10 +131,12 @@ def fz_filter(
 
 def hi_filter(
     ds_pws: npt.NDArray[np.float64],
+    distance_matrix: npt.NDArray[np.float64],
     hi_thres_a: npt.NDArray[np.float64],
     hi_thres_b: npt.NDArray[np.float64],
     nint: npt.NDArray[np.float64],
     n_stat=npt.NDArray[np.float64],
+    max_distance=npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """High Influx filter.
 
@@ -150,6 +175,27 @@ def hi_filter(
     npt.NDArray
         time series of flags
     """
+    # calculate support variables
+    if "reference" not in ds_pws:
+        nbrs_not_nan = []
+        reference = []
+        for pws_id in ds_pws.id.data:
+            neighbor_ids = distance_matrix.id.data[
+                (distance_matrix.sel(id=pws_id) < max_distance)
+                & (distance_matrix.sel(id=pws_id) > 0)
+            ]
+
+            N = (
+                ds_pws.rainfall.sel(id=neighbor_ids).notnull().sum(dim="id")
+            )  # noqa: PD004
+            nbrs_not_nan.append(N)
+
+            median = ds_pws.sel(id=neighbor_ids).rainfall.median(dim="id")
+            reference.append(median)
+
+        ds_pws["nbrs_not_nan"] = xr.concat(nbrs_not_nan, dim="id")
+        ds_pws["reference"] = xr.concat(reference, dim="id")
+
     # find first rainfall observation in each time series
     first_non_nan_index = ds_pws["rainfall"].notnull().argmax(dim="time")  # noqa: PD004
 
@@ -292,8 +338,36 @@ def so_filter(
     npt.NDArray
         Time series of flags.
     """
+    # calculate support variables
+    if "reference" not in ds_pws:
+        nbrs_not_nan = []
+        reference = []
+        for pws_id in ds_pws.id.data:
+            neighbor_ids = distance_matrix.id.data[
+                (distance_matrix.sel(id=pws_id) < max_distance)
+                & (distance_matrix.sel(id=pws_id) > 0)
+            ]
+
+            N = (
+                ds_pws.rainfall.sel(id=neighbor_ids).notnull().sum(dim="id")
+            )  # noqa: PD004
+            nbrs_not_nan.append(N)
+
+            median = ds_pws.sel(id=neighbor_ids).rainfall.median(dim="id")
+            reference.append(median)
+
+        ds_pws["nbrs_not_nan"] = xr.concat(nbrs_not_nan, dim="id")
+        ds_pws["reference"] = xr.concat(reference, dim="id")
+
     # For each station (ID), get the index of the first non-NaN rainfall value
     first_non_nan_index = ds_pws["rainfall"].notnull().argmax(dim="time")  # noqa: PD004
+
+    ds_pws["so_flag"] = xr.DataArray(
+        np.ones((len(ds_pws.id), len(ds_pws.time))) * -999, dims=("id", "time")
+    )
+    ds_pws["median_corr_nbrs"] = xr.DataArray(
+        np.ones((len(ds_pws.id), len(ds_pws.time))) * -999, dims=("id", "time")
+    )
 
     for i in range(len(ds_pws.id)):
         ds_station = ds_pws.isel(id=i)
@@ -338,8 +412,8 @@ def so_filter(
         ds_pws["so_flag"][i, :first_valid_time] = -1
 
         # disregard warm up period
-        ds_pws.so_flag[
-            i, first_valid_time : (first_valid_time + evaluation_period)
-        ] = -1
+        ds_pws.so_flag[i, first_valid_time : (first_valid_time + evaluation_period)] = (
+            -1
+        )
 
     return ds_pws

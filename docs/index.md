@@ -15,7 +15,10 @@ installation.md
 :caption: Examples
 :hidden:
 
-notebooks/merged_filters.ipynb
+notebooks/Faulty_Zeroes_filter.ipynb
+notebooks/High_Influx_filter.ipynb
+notebooks/Station_Outlier_filter.ipynb
+notebooks/Bias_correction.ipynb
 notebooks/indicator_correlation_filter.ipynb
 notebooks/peak_removal_filter.ipynb
 ```

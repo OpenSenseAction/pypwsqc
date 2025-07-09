@@ -422,7 +422,7 @@ def plot_peak(
                     markersize=8,
                     markeredgewidth=1.5,
                     linestyle="",
-                    label="legit values",
+                    label="valid values",
                 ),
                 Line2D(
                     [0],
@@ -466,7 +466,7 @@ def plot_peak(
                     markersize=8,
                     markeredgewidth=1.5,
                     linestyle="",
-                    label="legit values",
+                    label="valid values",
                 ),
                 Line2D(
                     [0],
@@ -510,7 +510,7 @@ def plot_peak(
                 markersize=8,
                 markeredgewidth=1.5,
                 linestyle="",
-                label="legit values",
+                label="valid values",
             ),
             Line2D(
                 [0],

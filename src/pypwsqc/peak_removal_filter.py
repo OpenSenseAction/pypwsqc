@@ -8,7 +8,9 @@ import xarray as xr
 from tqdm import tqdm
 
 
-def convert_to_utm(dataset, name_coord_lon, name_coord_lat, zone):
+def convert_to_utm(
+    dataset: xr.Dataset, name_coord_lon: str, name_coord_lat: str, zone: int
+) -> xr.Dataset:
     """Convert lon and lat from WGS84 to UTM (zone) and add them as x and y coordinates.
 
     Parameters
@@ -19,6 +21,8 @@ def convert_to_utm(dataset, name_coord_lon, name_coord_lat, zone):
         Name of the longitude coordinate in the dataset.
     name_coord_lat : str
         Name of the latitude coordinate in the dataset.
+    zone: int
+        UTM zone number to which the coordinates should be converted.
 
     Returns
     -------
@@ -38,8 +42,11 @@ def convert_to_utm(dataset, name_coord_lon, name_coord_lat, zone):
 
 
 def get_closest_points_to_point(
-    ds_points, ds_points_neighbors, max_distance, n_closest
-):
+    ds_points: xr.Dataset,
+    ds_points_neighbors: xr.Dataset,
+    max_distance: float,
+    n_closest: int,
+) -> xr.Dataset:
     """Get the closest points for given point locations.
 
     Note that both datasets that are passed as input have to have the variables x and y
@@ -74,7 +81,9 @@ def get_closest_points_to_point(
     )
 
 
-def get_nan_sequences(dataset, station, quantile, seq_len_threshold):
+def get_nan_sequences(
+    dataset: xr.Dataset, station: str, quantile: float, seq_len_threshold: int
+) -> tuple[list[np.datetime64], list[np.datetime64], list[np.datetime64], list[int]]:
     """Find values higher than the threshold and check for leading nan sequences.
 
     If there are leading nan sequences, find the start and end of the sequence and the
@@ -153,16 +162,16 @@ def get_nan_sequences(dataset, station, quantile, seq_len_threshold):
 
 
 def print_info(
-    dataset,
-    station,
-    max_distance,
-    n_closest,
-    quantile,
-    time_peak_lst,
-    seq_len_lst,
-    aa_closest_neighbors,
-    ab_closest_neighbors,
-):
+    dataset: xr.Dataset,
+    station: str,
+    max_distance: float,
+    n_closest: int,
+    quantile: float,
+    time_peak_lst: list[np.datetime64],
+    seq_len_lst: list[int],
+    aa_closest_neighbors: xr.Dataset,
+    ab_closest_neighbors: xr.Dataset | None,
+) -> tuple[float, int, float, float, int, int]:
     """
     Print some information about the selected station.
 
@@ -193,7 +202,8 @@ def print_info(
 
     Return
     ------
-    None
+    info_lst : list
+        Just for testing purposes.
     """
     info_lst = []
     _quantile = np.nanquantile(dataset.sel(id=station).rainfall.to_numpy(), quantile)
@@ -253,7 +263,7 @@ def print_info(
     return info_lst
 
 
-def inverse_distance_weighting(closest_neighbors):
+def inverse_distance_weighting(closest_neighbors: xr.Dataset) -> xr.DataArray:
     """Calculate weights for the closest neighbors, applying inverse distance weighting.
 
     Parameters
@@ -302,16 +312,16 @@ def inverse_distance_weighting(closest_neighbors):
 
 
 def interpolate_precipitation(
-    dataset,
-    station,
-    closest_neighbors,
-    weights_da,
-    seq_start_lst,
-    time_peak_lst,
-    seq_len_lst,
-    seq_nan_threshold=float,
-    min_station_threshold=int,
-):
+    dataset: xr.Dataset,
+    station: str,
+    closest_neighbors: xr.Dataset,
+    weights_da: xr.DataArray,
+    seq_start_lst: list[np.datetime64],
+    time_peak_lst: list[np.datetime64],
+    seq_len_lst: list[int],
+    seq_nan_threshold: float,
+    min_station_threshold: int,
+) -> list[np.ndarray[float]]:
     """Interpolate the precipitation values to obtain the "precipitation shape/profile".
 
     Parameters
@@ -436,7 +446,9 @@ def interpolate_precipitation(
     return seqs_lst
 
 
-def distribute_peak(dataset, station, time_peak_lst, seqs_lst):
+def distribute_peak(
+    dataset: xr.DataArray, station: str, time_peak_lst: list, seqs_lst: list
+) -> list[np.ndarray[float]]:
     """Distribute the peak  following the "precipitation shape/profile".
 
     Parameters
@@ -486,7 +498,13 @@ def distribute_peak(dataset, station, time_peak_lst, seqs_lst):
     return seqs_corr_lst
 
 
-def overwrite_seq(dataset, station, seqs_corr_lst, seq_start_lst, time_peak_lst):
+def overwrite_seq(
+    dataset: xr.DataArray,
+    station: str,
+    seqs_corr_lst: list,
+    seq_start_lst: list,
+    time_peak_lst: list,
+) -> xr.Dataset:
     """Overwrite the sequence of nan values leading a peak with the corrected sequences.
 
     Parameters

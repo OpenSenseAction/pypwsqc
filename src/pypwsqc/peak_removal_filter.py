@@ -61,6 +61,7 @@ def get_closest_points_to_point(
     ds_points_neighbors : xr.DataArray | xr.Dataset
         This is the dataset from which the nearest neighbors will be looked up.
     max_distance : float
+        In meters.
         The allowed distance of neighbors has to be smaller than max_distance.
         The unites are the units used for the projected coordinates x and y in the
         two datasets.
@@ -158,6 +159,14 @@ def get_nan_sequences(
             seq_start_lst.append(seq_start)
             seq_end_lst.append(time_peak - timedelta)
             seq_len_lst.append(length)
+
+    if len(time_peak_lst) == 0:
+        print(
+            f"\nNo peaks with nan sequence found for station {station}"
+            f" with quantile={quantile} and "
+            f"seq_len_threshold={seq_len_threshold}."
+        )
+
     return time_peak_lst, seq_start_lst, seq_end_lst, seq_len_lst
 
 
@@ -170,7 +179,7 @@ def print_info(
     time_peak_lst: list[np.datetime64],
     seq_len_lst: list[int],
     aa_closest_neighbors: xr.Dataset,
-    ab_closest_neighbors: xr.Dataset | None,
+    ab_closest_neighbors: xr.Dataset | None = None,
 ) -> tuple[float, int, float, float, int, int]:
     """
     Print some information about the selected station.
@@ -208,7 +217,9 @@ def print_info(
     info_lst = []
     _quantile = np.nanquantile(dataset.sel(id=station).rainfall.to_numpy(), quantile)
     num_peaks = len(time_peak_lst)
-    avg_seq_len = round(np.mean(seq_len_lst), 2)
+
+    avg_seq_len = round(np.mean(seq_len_lst), 2) if len(seq_len_lst) != 0 else 0.0
+
     perc_nans = round(
         (
             np.sum(seq_len_lst)
@@ -369,6 +380,10 @@ def interpolate_precipitation(
         neighbors = closest_neighbors.sel(id=station).neighbor_id.to_numpy()
         weights = weights_da.sel(id=station).to_numpy()
 
+    if np.all([value is None for value in neighbors]):
+        print(f"No neighbors found for station {station}.")
+        return []
+
     all_neighbors_seqs = []
     # list of lists. Each list corresponds to one neighbor containing his time series
     # with starts and ends of nan sequences of the selected station
@@ -469,6 +484,9 @@ def distribute_peak(
        List of arrays containing the values of the distributet peak for the
        nan sequences.
     """
+    if len(seqs_lst) == 0:
+        print(f"No sequences found for station {station}.")
+        return []
     seqs_corr_lst = []
     # iterate over all peaks (nan sequences) of the selected station
     for time_peak, seq_num in tqdm(
@@ -526,6 +544,9 @@ def overwrite_seq(
         Dataset, following the OpenSense data format standards with the corrected peaks
         and nan sequences.
     """
+    if len(seqs_corr_lst) == 0:
+        print(f"No corrected sequences found for station {station}.")
+        return dataset
     # create a copy of the dataset
     data_corr = dataset.copy(deep=True)
     data_corr.load()

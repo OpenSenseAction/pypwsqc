@@ -1,4 +1,6 @@
 import numpy as np
+import poligrain as plg
+import pytest
 import xarray as xr
 
 import pypwsqc.peak_removal_filter as prf
@@ -1084,7 +1086,61 @@ def create_test_weights_da_ref():
     )
 
 
-def test_convert_to_utm():
+def test_project_point_coordinates():
+    ds_gauge = xr.Dataset(
+        data_vars={
+            "rainfall_amount": (("id", "time"), np.reshape(np.arange(1, 13), (3, 4))),
+        },
+        coords={
+            "id": ("id", ["g1", "g2", "g3"]),
+            "time": ("time", np.arange(0, 4)),
+            "x": ("id", [0, 1, 1]),
+            "y": ("id", [0, 0, 1]),
+            "lon": ("id", [3.5, 4.1, 5.2]),
+            "lat": ("id", [50.1, 50.1, 51.2]),
+        },
+    )
+
+    lon, lat = ds_gauge.lon, ds_gauge.lat
+
+    # With default source_projections
+    x, y = plg.spatial.project_point_coordinates(
+        x=lon, y=lat, target_projection="EPSG:25832"
+    )
+    x_expected = np.array([106756.46571167826, 149635.93311767105, 234545.23195888632])
+    y_expected = np.array([5564249.372223592, 5561255.584168306, 5678930.9034550935])
+    assert x.data == pytest.approx(x_expected, abs=1e-9)
+    assert y.data == pytest.approx(y_expected, abs=1e-9)
+
+    # With different source and targe projection, using the opposite direction
+    # of the test above from UTM 32N to WGS 80
+    x_source = xr.DataArray(
+        data=np.array([106756.46571167826, 149635.93311767105, 234545.23195888632]),
+        coords={"id": ds_gauge.id.data},
+    )
+    y_source = xr.DataArray(
+        data=np.array([5564249.372223592, 5561255.584168306, 5678930.9034550935]),
+        coords={"id": ds_gauge.id.data},
+    )
+
+    x, y = plg.spatial.project_point_coordinates(
+        x=x_source,
+        y=y_source,
+        source_projection="EPSG:25832",
+        target_projection="EPSG:4326",
+    )
+
+    x_expected = lon
+    y_expected = lat
+    assert x.data == pytest.approx(x_expected, abs=1e-6)
+    assert y.data == pytest.approx(y_expected, abs=1e-6)
+
+    # Check that returned DataArray has correct ids
+    assert list(x.id.data) == ["g1", "g2", "g3"]
+    assert list(y.id.data) == ["g1", "g2", "g3"]
+
+
+def test_add_proj_coords_to_ds():
     # Arrange (setup)
     start_time = np.datetime64("2025-04-01T00:00:00", "ns")
     end_time = np.datetime64("2025-04-01T08:00:00", "ns")
@@ -1113,25 +1169,25 @@ def test_convert_to_utm():
     )
     x_expected = np.array(
         [
-            524883.44425925,
-            507760.54114806,
-            573534.35633562,
-            507601.05538652,
-            513432.95916921,
+            966874.5167846535,
+            948747.9700085114,
+            1017506.1839709862,
+            948586.9358490785,
+            954238.2302017424,
         ]
     )
     y_expected = np.array(
         [
-            5386185.46713846,
-            5399019.60369594,
-            5360947.83933791,
-            5399040.50555781,
-            5401281.78784132,
+            5405545.005227672,
+            5417020.947108718,
+            5384143.439689567,
+            5417029.240694353,
+            5419729.805045703,
         ]
     )
 
     # Act (execute)
-    test_ds_utm = prf.convert_to_utm(test_ds, "lon", "lat", 32)
+    test_ds_utm = prf.add_proj_coords_to_ds(test_ds, "lon", "lat", "EPSG:25831")
 
     # Assert (check)
     np.testing.assert_almost_equal(

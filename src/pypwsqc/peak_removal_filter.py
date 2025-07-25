@@ -3,56 +3,9 @@
 # import packages
 import numpy as np
 import poligrain as plg
-import pyproj
 import xarray as xr
+from poligrain.spatial import project_point_coordinates
 from tqdm import tqdm
-
-
-def project_point_coordinates(
-    x: xr.DataArray,
-    y: xr.DataArray,
-    target_projection: str,
-    source_projection: str = "EPSG:4326",
-) -> tuple[xr.DataArray, xr.DataArray]:
-    """Project coordinates x and y of point data.
-
-    Note that `x` and `y` have to be `xarray.DataArray` so that we can return
-    the projected coordinates also as `xarray.DataArray` with the correct
-    `coord` data so that they can easily and safely added to an existing
-    `xarray.Dataset`, e.g. like the following code:
-
-    >>> ds.coords["x"], ds.coords["y"] = plg.spatial.project_point_coordinates(
-    ...     ds.lon, ds.lat, target_projection="EPSG:25832",
-    ...     )
-
-    Parameters
-    ----------
-    x : xr.DataArray
-        The coordinates along the x-axis
-    y : xr.DataArray
-        The coordinates along the y-axis
-    target_projection : str
-        An EPSG string that defines the projection the points shall be projected too,
-        e.g. "EPSG:25832" for UTM zone 32N
-    source_projection : str, optional
-        An EPSG string that defines the projection of the supplied `x` and `y` data,
-        by default "EPSG:4326"
-
-    Returns
-    -------
-    tuple[xr.DataArray, xr.DataArray]
-        The projected coordinates
-    """
-    transformer = pyproj.Transformer.from_crs(
-        crs_to=target_projection, crs_from=source_projection, always_xy=True
-    )
-    x_projected, y_projected = transformer.transform(x, y)  # pylint: disable=unpacking-non-sequence
-
-    x_projected = xr.DataArray(data=x_projected, coords=x.coords, name="x")
-    y_projected = xr.DataArray(data=y_projected, coords=y.coords, name="y")
-    x_projected.attrs["projection"] = target_projection
-    y_projected.attrs["projection"] = target_projection
-    return x_projected, y_projected
 
 
 def add_proj_coords_to_ds(

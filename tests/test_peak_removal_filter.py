@@ -1,6 +1,4 @@
 import numpy as np
-import poligrain as plg
-import pytest
 import xarray as xr
 
 import pypwsqc.peak_removal_filter as prf
@@ -1084,60 +1082,6 @@ def create_test_weights_da_ref():
     return xr.DataArray(
         weights, dims=["id", "weights"], coords={"id": index}, name="weights"
     )
-
-
-def test_project_point_coordinates():
-    ds_gauge = xr.Dataset(
-        data_vars={
-            "rainfall_amount": (("id", "time"), np.reshape(np.arange(1, 13), (3, 4))),
-        },
-        coords={
-            "id": ("id", ["g1", "g2", "g3"]),
-            "time": ("time", np.arange(0, 4)),
-            "x": ("id", [0, 1, 1]),
-            "y": ("id", [0, 0, 1]),
-            "lon": ("id", [3.5, 4.1, 5.2]),
-            "lat": ("id", [50.1, 50.1, 51.2]),
-        },
-    )
-
-    lon, lat = ds_gauge.lon, ds_gauge.lat
-
-    # With default source_projections
-    x, y = plg.spatial.project_point_coordinates(
-        x=lon, y=lat, target_projection="EPSG:25832"
-    )
-    x_expected = np.array([106756.46571167826, 149635.93311767105, 234545.23195888632])
-    y_expected = np.array([5564249.372223592, 5561255.584168306, 5678930.9034550935])
-    assert x.data == pytest.approx(x_expected, abs=1e-9)
-    assert y.data == pytest.approx(y_expected, abs=1e-9)
-
-    # With different source and targe projection, using the opposite direction
-    # of the test above from UTM 32N to WGS 80
-    x_source = xr.DataArray(
-        data=np.array([106756.46571167826, 149635.93311767105, 234545.23195888632]),
-        coords={"id": ds_gauge.id.data},
-    )
-    y_source = xr.DataArray(
-        data=np.array([5564249.372223592, 5561255.584168306, 5678930.9034550935]),
-        coords={"id": ds_gauge.id.data},
-    )
-
-    x, y = plg.spatial.project_point_coordinates(
-        x=x_source,
-        y=y_source,
-        source_projection="EPSG:25832",
-        target_projection="EPSG:4326",
-    )
-
-    x_expected = lon
-    y_expected = lat
-    assert x.data == pytest.approx(x_expected, abs=1e-6)
-    assert y.data == pytest.approx(y_expected, abs=1e-6)
-
-    # Check that returned DataArray has correct ids
-    assert list(x.id.data) == ["g1", "g2", "g3"]
-    assert list(y.id.data) == ["g1", "g2", "g3"]
 
 
 def test_add_proj_coords_to_ds():

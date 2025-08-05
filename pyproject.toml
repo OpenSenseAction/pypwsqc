@@ -113,7 +113,7 @@ disallow_incomplete_defs = true
 [tool.ruff]
 src = ["src"]
 line-length = 88
-target-version = "py310"
+target-version = "py39"
 extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]

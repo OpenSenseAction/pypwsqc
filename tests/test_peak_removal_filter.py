@@ -525,7 +525,7 @@ def create_test_ds():
     rainfall.append(data_test_neighbor_3)
     rainfall.append(data_test_neighbor_4)
 
-    rainfall_reshape = [list(x) for x in zip(*rainfall, strict=False)]
+    rainfall_reshape = [list(x) for x in zip(*rainfall)]
     rainfall_reshape_ar = np.array(rainfall_reshape)
 
     index = [
@@ -872,7 +872,7 @@ def create_test_ds_ref():
     rainfall.append(data_test_ref_neighbor_3)
     rainfall.append(data_test_ref_neighbor_4)
 
-    rainfall_reshape = [list(x) for x in zip(*rainfall, strict=False)]
+    rainfall_reshape = [list(x) for x in zip(*rainfall)]
     rainfall_reshape_ar = np.array(rainfall_reshape)
 
     index = [

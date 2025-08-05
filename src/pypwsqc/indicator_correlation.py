@@ -111,8 +111,8 @@ def indicator_distance_matrix(
     Indicator correlation and distance matrices as tuple [xr.DataArray, xr.DataArray]
 
     """
-    xy_a = list(zip(da_a.x.data, da_a.y.data, strict=False))
-    xy_b = list(zip(da_b.x.data, da_b.y.data, strict=False))
+    xy_a = list(zip(da_a.x.data, da_a.y.data))
+    xy_b = list(zip(da_b.x.data, da_b.y.data))
     dist_mtx = scipy.spatial.distance.cdist(xy_a, xy_b, metric="euclidean")
     indcorr_mtx = np.full_like(dist_mtx, np.nan)
     # list_corr = []

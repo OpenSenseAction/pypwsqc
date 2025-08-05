@@ -377,9 +377,7 @@ def interpolate_precipitation(
         if neighbor is None:  # stop if there are no (no more) neighbors
             break
         # iterate over all nan sequences of the selected station
-        for seq_start, peak, seq_len in zip(
-            seq_start_lst, time_peak_lst, seq_len_lst
-        ):
+        for seq_start, peak, seq_len in zip(seq_start_lst, time_peak_lst, seq_len_lst):
             # check if the start and peak of the nan sequence are in the time series of
             # the neighbor. If not, set this time series from this neighbor to NaN
             if seq_start not in time or peak not in time:

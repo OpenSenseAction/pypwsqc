@@ -6,8 +6,8 @@ from scipy import optimize, stats
 def fit_gamma_with_threshold(
     data: np.array,
     threshold: float,
-    )  -> tuple [float, float, float]:
-    #to implement: Minimum data length required for calculating parameters
+) -> tuple[float, float, float]:
+    # to implement: Minimum data length required for calculating parameters
     """Fit a censored gamma distribution to rainfall data.
 
     Parameters
@@ -23,7 +23,7 @@ def fit_gamma_with_threshold(
     shape and scale parameters for theoretical gamma function and p0 [float, float, float]
     """
     data_valid = data[~np.isnan(data)]
-    raindata = data_valid[data_valid>0]
+    raindata = data_valid[data_valid > 0]
     raindata_trs = raindata[raindata > threshold]
 
     # First quick check for sufficient data length, needs
@@ -33,7 +33,7 @@ def fit_gamma_with_threshold(
         return np.nan, np.nan, np.nan
 
     # calculate probability of no rainfall (p0)
-    p0 = 1- raindata.shape[0]/data_valid.shape[0]
+    p0 = 1 - raindata.shape[0] / data_valid.shape[0]
     # statistics for initial guesses
     raindata_mean = np.mean(raindata)
     raindata_variance = np.var(raindata)
@@ -52,21 +52,20 @@ def fit_gamma_with_threshold(
         if aa <= 0 or bb <= 0:
             return np.inf
 
-
         y = stats.gamma.pdf(raindata_trs, a=aa, loc=0, scale=bb)
         pa = stats.gamma.cdf(threshold, a=aa, loc=0, scale=bb)
 
         if np.any(y <= 0) or pa <= 0:
             return np.inf
 
-        ltest = np.sum(np.log(y)) + np.log(pa)*(raindata.shape[0] - raindata_trs.shape[0])
+        ltest = np.sum(np.log(y)) + np.log(pa) * (
+            raindata.shape[0] - raindata_trs.shape[0]
+        )
         return -ltest
 
     # Compute initial guess from method of moments
     result = optimize.minimize(
-        negative_log_likelihood,
-        initial_guess,
-        bounds=[(1e-5, None), (1e-5, None)]
+        negative_log_likelihood, initial_guess, bounds=[(1e-5, None), (1e-5, None)]
     )
 
     if result.success:
@@ -76,16 +75,15 @@ def fit_gamma_with_threshold(
         raise RuntimeError(f"Optimization failed: {result.message}")
 
 
-
 def qq_gamma(
-    data : np.array,
+    data: np.array,
     shape_input: float,
-    scale_input : float,
-    p0_input : float,
-    shape_ref : float,
-    scale_ref : float,
-    p0_ref : float,
-    ) -> np.array :
+    scale_input: float,
+    p0_input: float,
+    shape_ref: float,
+    scale_ref: float,
+    p0_ref: float,
+) -> np.array:
     """
     Function for bias correction of PWS data using quantile mapping with
     parameters (scale, shape) form theoretical gamma function and censor values
@@ -113,11 +111,14 @@ def qq_gamma(
     -------
     Bias corrected data [np.array]
     """
-
     result = data.copy()  # Copy of the original array
     mask = data > 0
     # Only compute for values > 0
-    data_qt = p0_input + (1 - p0_input) * stats.gamma.cdf(data[mask], a=shape_input, scale=scale_input)
-    data_bcorr = stats.gamma.ppf((data_qt - p0_ref) / (1 - p0_ref), a=shape_ref, scale=scale_ref)
+    data_qt = p0_input + (1 - p0_input) * stats.gamma.cdf(
+        data[mask], a=shape_input, scale=scale_input
+    )
+    data_bcorr = stats.gamma.ppf(
+        (data_qt - p0_ref) / (1 - p0_ref), a=shape_ref, scale=scale_ref
+    )
     result[mask] = data_bcorr
     return result

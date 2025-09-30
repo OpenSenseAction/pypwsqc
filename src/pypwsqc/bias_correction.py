@@ -20,7 +20,7 @@ def fit_gamma_with_threshold(
 
     Returns
     -------
-    shape and scale parameters for theoretical gamma function and p0 [float, float, float]
+    Returns tuple of shape and scale parameters for theoretical gamma function and p0.
     """
     data_valid = data[~np.isnan(data)]
     raindata = data_valid[data_valid > 0]
@@ -39,7 +39,8 @@ def fit_gamma_with_threshold(
     raindata_variance = np.var(raindata)
 
     if raindata_mean <= 0 or raindata_variance <= 0:
-        raise ValueError("Invalid data: mean and variance must be positive.")
+        msg = "Invalid data: mean and variance must be positive."
+        raise ValueError(msg)
 
     # initial guess for parameters
     b_init = raindata_variance / raindata_mean
@@ -71,8 +72,8 @@ def fit_gamma_with_threshold(
     if result.success:
         a_opt, b_opt = result.x
         return a_opt, b_opt, p0
-    else:
-        raise RuntimeError(f"Optimization failed: {result.message}")
+    msg = f"Optimization failed: {result.message}"
+    raise RuntimeError(msg)
 
 
 def qq_gamma(
@@ -84,10 +85,11 @@ def qq_gamma(
     scale_ref: float,
     p0_ref: float,
 ) -> np.array:
-    """
-    Function for bias correction of PWS data using quantile mapping with
-    parameters (scale, shape) form theoretical gamma function and censor values
-    from threshold of probability of precipitation occurrence, i.e. values > 0 (p0).
+    """Perform bias correction of rainfall data using quantile mapping.
+
+    This function uses parameters (scale, shape) from theoretical gamma function
+    and censor values from threshold of probability of precipitation occurrence,
+    i.e. values > 0 (p0).
 
     Parameters
     ----------

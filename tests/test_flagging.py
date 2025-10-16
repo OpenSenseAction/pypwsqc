@@ -331,6 +331,7 @@ def test_so_filter():
     expected_flags = expected.sel(time=result_flags.time)
 
     np.testing.assert_almost_equal(expected_flags.to_numpy(), result_flags.to_numpy())
+    assert "bias_corr_factor" not in result.data_vars
 
     # test for when Bias == True
     result = pypwsqc.flagging.so_filter(
@@ -351,6 +352,7 @@ def test_so_filter():
     )
 
     np.testing.assert_almost_equal(expected_flags.to_numpy(), result_flags.to_numpy())
+    assert "bias_corr_factor" in result.data_vars
 
     # test when there are no neighbors within max_distance
     # (because of small max_distance)

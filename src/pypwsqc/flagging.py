@@ -359,16 +359,16 @@ def so_filter(
             }
         ] = -1
 
-        if bias_corr:
-            # run bias correction
-            ds_pws = _calc_bias_corr_factor(
-                ds_pws,
-                evaluation_period,
-                distance_matrix,
-                max_distance,
-                beta,
-                dbc,
-            )
+    if bias_corr:
+        # run bias correction
+        ds_pws = _calc_bias_corr_factor(
+            ds_pws,
+            evaluation_period,
+            distance_matrix,
+            max_distance,
+            beta,
+            dbc,
+        )
 
     return ds_pws
 

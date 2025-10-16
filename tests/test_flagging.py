@@ -298,6 +298,12 @@ def test_so_filter():
 
     ds_pws = xr.open_dataset("tests/test_dataset.nc").load()
     expected_dataset = xr.open_dataset("tests/expected_array_so_bias.nc").load()
+    # slice data to make test run faster. Note that we need at least 8064 5min timesteps
+    # (28 days) within the rolling `evaluation_period` window before we can do some actual
+    # flagging. Hence we take a bit more than a month of data as slice here.
+    ds_pws = ds_pws.sel(time=slice("2017-08-29", "2017-10-01"))
+    expected_dataset = expected_dataset.sel(time=slice("2017-08-29", "2017-10-01"))
+
     expected = expected_dataset.so_flag
     distance_matrix = plg.spatial.calc_point_to_point_distances(ds_pws, ds_pws)
     evaluation_period = 8064
@@ -322,8 +328,9 @@ def test_so_filter():
     result_flags = result.so_flag.isel(time=slice(evaluation_period, None)).sel(
         id=pws_id
     )
+    expected_flags = expected.sel(time=result_flags.time)
 
-    np.testing.assert_almost_equal(expected.to_numpy(), result_flags.to_numpy())
+    np.testing.assert_almost_equal(expected_flags.to_numpy(), result_flags.to_numpy())
 
     # test for when Bias == True
     result = pypwsqc.flagging.so_filter(
@@ -343,11 +350,13 @@ def test_so_filter():
         id=pws_id
     )
 
-    np.testing.assert_almost_equal(expected.to_numpy(), result_flags.to_numpy())
+    np.testing.assert_almost_equal(expected_flags.to_numpy(), result_flags.to_numpy())
 
     # test when there are no neighbors within max_distance
     # (because of small max_distance)
     ds_pws = xr.open_dataset("tests/test_dataset.nc").load()
+    # slice data, see above for explanation
+    ds_pws = ds_pws.sel(time=slice("2017-08-29", "2017-10-01"))
     expected = expected_dataset.minus_one
     distance_matrix = plg.spatial.calc_point_to_point_distances(ds_pws, ds_pws)
     evaluation_period = 8064
@@ -372,8 +381,9 @@ def test_so_filter():
     result_flags = result.so_flag.isel(time=slice(evaluation_period, None)).sel(
         id=pws_id
     )
+    expected_flags = expected.sel(time=result_flags.time)
 
-    np.testing.assert_almost_equal(expected.to_numpy(), result_flags.to_numpy())
+    np.testing.assert_almost_equal(expected_flags.to_numpy(), result_flags.to_numpy())
 
 
 def test_bias_corr():

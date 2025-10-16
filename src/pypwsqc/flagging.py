@@ -352,11 +352,7 @@ def so_filter(
 
         # disregard warm up period
         ds_pws["so_flag"].isel(id=i).loc[
-            {
-                "time": ds_pws.time[
-                    first_valid_time : first_valid_time + evaluation_period
-                ]
-            }
+            {"time": ds_pws.time[0 : first_valid_time + evaluation_period]}
         ] = -1
 
     if bias_corr:

@@ -354,6 +354,16 @@ def test_so_filter():
     np.testing.assert_almost_equal(expected_flags.to_numpy(), result_flags.to_numpy())
     assert "bias_corr_factor" in result.data_vars
 
+    # Assure that we get all -1 values at the start of a PWS time series until the timestep
+    # where we have passed the first full `evaluation_period` starting from the first
+    # non-NaN value. Note that this behavior was wrong in PR46 because time series that
+    # start with NaN where not treated correctly
+    expected = np.array([-1, -1, -1, -1, -1, -1, -1, -1, -1, -1])
+    np.testing.assert_almost_equal(
+        actual=result.sel(id="ams70", time="2017-09-09").so_flag.data[:10],
+        desired=expected,
+    )
+
     # test when there are no neighbors within max_distance
     # (because of small max_distance)
     ds_pws = xr.open_dataset("tests/test_dataset.nc").load()

@@ -20,7 +20,7 @@ def _indicator_correlation(
     perc : float
         Percentile threshold
     exclude_nan : bool
-        Default True, exculdes pairs where a least one value is NaN
+        Default True, excludes pairs where a least one value is NaN
     min_valid_overlap : int
         Minimum number of required overlapping data for calculating the
         indicator correlation
@@ -96,7 +96,7 @@ def indicator_distance_matrix(
     prob : float
         Percentile threshold for indicator correlation
     exclude_nan : bool
-        Default True, exculdes pairs where a least one value is NaN
+        Default True, excludes pairs where a least one value is NaN
     min_valid_overlap : int
         Minimum number of overlapping data for calculating the indicator correlation
 

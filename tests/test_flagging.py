@@ -10,6 +10,9 @@ import pypwsqc
 def test_fz_filter():
     # fmt: off
 
+    ds_pws = xr.open_dataset("tests/test_dataset.nc")
+    distance_matrix = plg.spatial.calc_point_to_point_distances(ds_pws, ds_pws)
+
     #Test 1. Station reports no rain, neighbours are reporting rain
     pws_data = np.array(
     [0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   ,
@@ -43,7 +46,7 @@ def test_fz_filter():
         1., -1., 1.])
 
     expected = xr.DataArray(np.atleast_2d(expected), coords={'id': ['station_1',], 'time': range(len(expected))})
-        # fmt: on
+    # fmt: on
 
     ds = xr.Dataset(
         {
@@ -58,6 +61,8 @@ def test_fz_filter():
         ds,
         nint=3,
         n_stat=5,
+        distance_matrix=distance_matrix,
+        max_distance=10e3,
     )
 
     np.testing.assert_almost_equal(expected[0], result.fz_flag.data[0])
@@ -120,14 +125,41 @@ def test_fz_filter():
         ds,
         nint=7,
         n_stat=5,
+        distance_matrix=distance_matrix,
+        max_distance=10e3,
     )
 
     np.testing.assert_almost_equal(expected[0], result.fz_flag.data[0])
 
+    # Test 3. Test when reference is not included in data set
+    # reproduce the flags for Ams11, 2017-07-15 to 2017-07-30
+
+    ds_pws = xr.open_dataset("tests/test_dataset.nc")
+    ds_pws = ds_pws.sel(time=slice("2017-07-15", "2017-07-30"))
+    expected_dataset = xr.open_dataset("tests/expected_array_fz_hi.nc")
+    expected = expected_dataset.fz_flag
+    distance_matrix = plg.spatial.calc_point_to_point_distances(ds_pws, ds_pws)
+    pws_id = "ams11"
+
+    result = pypwsqc.flagging.fz_filter(
+        ds_pws,
+        nint=6,
+        n_stat=5,
+        distance_matrix=distance_matrix,
+        max_distance=10e3,
+    )
+
+    result_flags = result.fz_flag.sel(id=pws_id)
+
+    np.testing.assert_almost_equal(expected.to_numpy(), result_flags.to_numpy())
+
 
 def test_hi_filter():
-    # for max_distance = 10e3
     # fmt: off
+
+    ds_pws = xr.open_dataset("tests/test_dataset.nc")
+    distance_matrix = plg.spatial.calc_point_to_point_distances(ds_pws, ds_pws)
+
     pws_data = np.array([[0.       , 0.       , 0.101    , 0.       , 0.101    , 0.       ,
        0.       , 0.       , 0.       , 0.       , 0.       , 1.3130001,
        3.7370002, 0.404    , 0.       , 0.       , 0.       , 0.       ,
@@ -167,6 +199,8 @@ def test_hi_filter():
         hi_thres_b=10,
         nint=8064,
         n_stat=5,
+        distance_matrix=distance_matrix,
+        max_distance=10e3,
     )
 
     np.testing.assert_almost_equal(expected, result.hi_flag.data)
@@ -197,6 +231,8 @@ def test_hi_filter():
         hi_thres_b=3,
         nint=8064,
         n_stat=5,
+        distance_matrix=distance_matrix,
+        max_distance=10e3,
     )
 
     np.testing.assert_almost_equal(expected, result.hi_flag.data)
@@ -226,16 +262,49 @@ def test_hi_filter():
         hi_thres_b=10,
         nint=8064,
         n_stat=5,
+        distance_matrix=distance_matrix,
+        max_distance=10e3,
     )
 
     np.testing.assert_almost_equal(expected, result.hi_flag.data)
 
-
-def test_so_filter():
-    # reproduce the flags for Ams16, 2017-08-12 to 2018-10-15
+    # Test 3. Test when reference is not included in data set
+    # reproduce the flags for Ams11, 2017-07-15 to 2017-07-30
 
     ds_pws = xr.open_dataset("tests/test_dataset.nc")
-    expected = xr.open_dataarray("tests/expected_array.nc")
+    ds_pws = ds_pws.sel(time=slice("2017-07-15", "2017-07-30"))
+    expected_dataset = xr.open_dataset("tests/expected_array_fz_hi.nc")
+    expected = expected_dataset.hi_flag
+    distance_matrix = plg.spatial.calc_point_to_point_distances(ds_pws, ds_pws)
+    pws_id = "ams11"
+
+    result = pypwsqc.flagging.hi_filter(
+        ds_pws,
+        hi_thres_a=0.4,
+        hi_thres_b=10,
+        nint=6,
+        n_stat=5,
+        distance_matrix=distance_matrix,
+        max_distance=10e3,
+    )
+
+    result_flags = result.hi_flag.sel(id=pws_id)
+
+    np.testing.assert_almost_equal(expected.to_numpy(), result_flags.to_numpy())
+
+
+def test_so_filter():
+    # reproduce the flags for Ams16, 2017-08-12 to 2017-10-15
+
+    ds_pws = xr.open_dataset("tests/test_dataset.nc").load()
+    expected_dataset = xr.open_dataset("tests/expected_array_so_bias.nc").load()
+    # slice data to make test run faster. Note that we need at least 8064 5min timesteps
+    # (28 days) within the rolling `evaluation_period` window before we can do some actual
+    # flagging. Hence we take a bit more than a month of data as slice here.
+    ds_pws = ds_pws.sel(time=slice("2017-08-29", "2017-10-01"))
+    expected_dataset = expected_dataset.sel(time=slice("2017-08-29", "2017-10-01"))
+
+    expected = expected_dataset.so_flag
     distance_matrix = plg.spatial.calc_point_to_point_distances(ds_pws, ds_pws)
     evaluation_period = 8064
     pws_id = "ams16"
@@ -259,5 +328,137 @@ def test_so_filter():
     result_flags = result.so_flag.isel(time=slice(evaluation_period, None)).sel(
         id=pws_id
     )
+    expected_flags = expected.sel(time=result_flags.time)
+
+    np.testing.assert_almost_equal(expected_flags.to_numpy(), result_flags.to_numpy())
+    assert "bias_corr_factor" not in result.data_vars
+
+    # test for when Bias == True
+    result = pypwsqc.flagging.so_filter(
+        ds_pws=ds_pws,
+        distance_matrix=distance_matrix,
+        evaluation_period=evaluation_period,
+        mmatch=200,
+        gamma=0.15,
+        n_stat=5,
+        max_distance=10e3,
+        bias_corr=True,
+        beta=0.2,
+        dbc=1,
+    )
+
+    result_flags = result.so_flag.isel(time=slice(evaluation_period, None)).sel(
+        id=pws_id
+    )
+
+    np.testing.assert_almost_equal(expected_flags.to_numpy(), result_flags.to_numpy())
+    assert "bias_corr_factor" in result.data_vars
+
+    # Assure that we get all -1 values at the start of a PWS time series until the timestep
+    # where we have passed the first full `evaluation_period` starting from the first
+    # non-NaN value. Note that this behavior was wrong in PR46 because time series that
+    # start with NaN where not treated correctly
+    expected = np.array([-1, -1, -1, -1, -1, -1, -1, -1, -1, -1])
+    np.testing.assert_almost_equal(
+        actual=result.sel(id="ams70", time="2017-09-09").so_flag.data[:10],
+        desired=expected,
+    )
+
+    # test when there are no neighbors within max_distance
+    # (because of small max_distance)
+    ds_pws = xr.open_dataset("tests/test_dataset.nc").load()
+    # slice data, see above for explanation
+    ds_pws = ds_pws.sel(time=slice("2017-08-29", "2017-10-01"))
+    expected = expected_dataset.minus_one
+    distance_matrix = plg.spatial.calc_point_to_point_distances(ds_pws, ds_pws)
+    evaluation_period = 8064
+    pws_id = "ams16"
+
+    ds_pws["so_flag"] = xr.DataArray(
+        np.ones((len(ds_pws.id), len(ds_pws.time))) * -999, dims=("id", "time")
+    )
+    ds_pws["median_corr_nbrs"] = xr.DataArray(
+        np.ones((len(ds_pws.id), len(ds_pws.time))) * -999, dims=("id", "time")
+    )
+
+    result = pypwsqc.flagging.so_filter(
+        ds_pws=ds_pws,
+        distance_matrix=distance_matrix,
+        evaluation_period=evaluation_period,
+        mmatch=200,
+        gamma=0.15,
+        n_stat=5,
+        max_distance=5,
+    )
+    result_flags = result.so_flag.isel(time=slice(evaluation_period, None)).sel(
+        id=pws_id
+    )
+    expected_flags = expected.sel(time=result_flags.time)
+
+    np.testing.assert_almost_equal(expected_flags.to_numpy(), result_flags.to_numpy())
+
+
+def test_bias_corr():
+    # reproduce the flags for Ams16, 2017-08-12 to 2017-10-15
+
+    ds_pws = xr.open_dataset("tests/test_dataset.nc").load()
+    expected_dataset = xr.open_dataset("tests/expected_array_so_bias.nc").load()
+    expected = expected_dataset.bias_corr_factor
+    distance_matrix = plg.spatial.calc_point_to_point_distances(ds_pws, ds_pws)
+    evaluation_period = 8064
+    pws_id = "ams16"
+    dbc = 1
+
+    # initialize
+    ds_pws["BCF_new"] = xr.DataArray(
+        np.ones((len(ds_pws.id), len(ds_pws.time))) * -999, dims=("id", "time")
+    )
+
+    ds_pws["bias_corr_factor"] = xr.DataArray(
+        np.ones((len(ds_pws.id), len(ds_pws.time))) * dbc, dims=("id", "time")
+    )
+
+    result = pypwsqc.flagging.bias_correction(
+        ds_pws,
+        evaluation_period,
+        distance_matrix,
+        max_distance=10e3,
+        beta=0.2,
+        dbc=1,
+    )
+
+    result_flags = result.bias_corr_factor.isel(
+        time=slice(evaluation_period, None)
+    ).sel(id=pws_id)
+
+    np.testing.assert_almost_equal(expected.to_numpy(), result_flags.to_numpy())
+
+    # test when there are no neighbors within max_distance
+    # (because of small max_distance)
+    ds_pws = xr.open_dataset("tests/test_dataset.nc").load()
+    expected = expected_dataset.minus_one
+    distance_matrix = plg.spatial.calc_point_to_point_distances(ds_pws, ds_pws)
+
+    # initialize
+    ds_pws["BCF_new"] = xr.DataArray(
+        np.ones((len(ds_pws.id), len(ds_pws.time))) * -999, dims=("id", "time")
+    )
+
+    ds_pws["bias_corr_factor"] = xr.DataArray(
+        np.ones((len(ds_pws.id), len(ds_pws.time))) * dbc, dims=("id", "time")
+    )
+
+    result = pypwsqc.flagging.bias_correction(
+        ds_pws,
+        evaluation_period,
+        distance_matrix,
+        max_distance=5,
+        beta=0.2,
+        dbc=1,
+    )
+
+    result_flags = result.bias_corr_factor.isel(
+        time=slice(evaluation_period, None)
+    ).sel(id=pws_id)
 
     np.testing.assert_almost_equal(expected.to_numpy(), result_flags.to_numpy())

@@ -297,7 +297,7 @@ def plot_peak(
     )  # includes the peak
     x_nan_seq_others = [
         np.arange(seq_start, seq_end + timedelta * 2, timedelta)
-        for seq_start, seq_end in zip(seq_start_lst, seq_end_lst, strict=False)
+        for seq_start, seq_end in zip(seq_start_lst, seq_end_lst)
     ]  # include the peak
     x_peak = np.datetime64(time_peak_lst[peak_num])
 
@@ -358,7 +358,7 @@ def plot_peak(
 
     # mark other peaks/remaining or corrected peaks
     for time_peak_other, x_nan_seq_other, y_nan_seq_other in zip(
-        time_peak_lst, x_nan_seq_others, y_nan_seq_others, strict=False
+        time_peak_lst, x_nan_seq_others, y_nan_seq_others
     ):
         if time_peak_other in x:
             if time_peak_other == x_peak:  # skip the above selected peak

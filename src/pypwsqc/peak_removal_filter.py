@@ -377,9 +377,7 @@ def interpolate_precipitation(
         if neighbor is None:  # stop if there are no (no more) neighbors
             break
         # iterate over all nan sequences of the selected station
-        for seq_start, peak, seq_len in zip(
-            seq_start_lst, time_peak_lst, seq_len_lst, strict=False
-        ):
+        for seq_start, peak, seq_len in zip(seq_start_lst, time_peak_lst, seq_len_lst):
             # check if the start and peak of the nan sequence are in the time series of
             # the neighbor. If not, set this time series from this neighbor to NaN
             if seq_start not in time or peak not in time:
@@ -409,7 +407,7 @@ def interpolate_precipitation(
     # station
     # iterate over all nan sequences of the selected station
     for i, length in tqdm(
-        zip(range(len(seq_len_lst)), seq_len_lst, strict=False),
+        zip(range(len(seq_len_lst)), seq_len_lst),
         desc="Interpolate precipitation values for sequences",
         unit=" sequences",
         total=len(seq_len_lst),
@@ -419,7 +417,7 @@ def interpolate_precipitation(
             length + 1
         )  # sequence length + 1 to later also assign a new value to the peak
         # iterate over all neighbors and their time series
-        for neighbor_seqs, weight in zip(all_neighbors_seqs, weights, strict=False):
+        for neighbor_seqs, weight in zip(all_neighbors_seqs, weights):
             if np.isnan(neighbor_seqs[i]).any():
                 # If the neighbor time series was set to NaN, skip this neighbor for
                 # this sequence
@@ -460,7 +458,7 @@ def distribute_peak(dataset, station, time_peak_lst, seqs_lst):
     seqs_corr_lst = []
     # iterate over all peaks (nan sequences) of the selected station
     for time_peak, seq_num in tqdm(
-        zip(time_peak_lst, range(len(seqs_lst)), strict=False),
+        zip(time_peak_lst, range(len(seqs_lst))),
         desc="Distribute peaks",
         unit=" peaks",
         total=len(time_peak_lst),
@@ -514,7 +512,7 @@ def overwrite_seq(dataset, station, seqs_corr_lst, seq_start_lst, time_peak_lst)
     # iterate over all sequences and overwrite the values of the leading nan sequences
     # and peaks with the corrected values
     for seq_corr, seq_start, peak in tqdm(
-        zip(seqs_corr_lst, seq_start_lst, time_peak_lst, strict=False),
+        zip(seqs_corr_lst, seq_start_lst, time_peak_lst),
         desc="Overwrite sequences",
         unit=" sequences",
         total=len(seqs_corr_lst),

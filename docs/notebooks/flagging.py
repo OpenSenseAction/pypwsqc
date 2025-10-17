@@ -352,19 +352,23 @@ def so_filter(
 
         # disregard warm up period
         ds_pws["so_flag"].isel(id=i).loc[
-            {"time": ds_pws.time[0 : first_valid_time + evaluation_period]}
+            {
+                "time": ds_pws.time[
+                    first_valid_time : first_valid_time + evaluation_period
+                ]
+            }
         ] = -1
 
-    if bias_corr:
-        # run bias correction
-        ds_pws = _calc_bias_corr_factor(
-            ds_pws,
-            evaluation_period,
-            distance_matrix,
-            max_distance,
-            beta,
-            dbc,
-        )
+        if bias_corr:
+            # run bias correction
+            ds_pws = _calc_bias_corr_factor(
+                ds_pws,
+                evaluation_period,
+                distance_matrix,
+                max_distance,
+                beta,
+                dbc,
+            )
 
     return ds_pws
 
@@ -494,7 +498,7 @@ def _calc_bias_corr_factor(
 
         # if there are no neighbors, continue
         if len(neighbor_ids) == 0:
-            ds_pws["bias_corr_factor"].loc[{"id": pws_id}] = -1
+            ds_pws["bias_corr_factor"].loc[{id: pws_id}] = -1
             continue
 
         # find first valid time
@@ -541,32 +545,16 @@ def _calc_bias_corr_factor(
 def _calc_reference_and_nbrs_not_nan(ds_pws, distance_matrix, max_distance):
     nbrs_not_nan = []
     reference = []
-
-    time_len = ds_pws.sizes["time"]  # length of the time dimension
-
     for pws_id in ds_pws.id.data:
         neighbor_ids = distance_matrix.id.data[
             (distance_matrix.sel(id=pws_id) < max_distance)
             & (distance_matrix.sel(id=pws_id) > 0)
         ]
 
-        if len(neighbor_ids) == 0:
-            # No neighbors → fill with np.nan
-            nr_nbrs_not_nan = xr.DataArray(
-                np.zeros(time_len, dtype=int),
-                dims=["time"],
-                coords={"time": ds_pws.time},
-            )
-            median = xr.DataArray(
-                np.full(time_len, np.nan), dims=["time"], coords={"time": ds_pws.time}
-            )
-        else:
-            nr_nbrs_not_nan = (
-                ds_pws.rainfall.sel(id=neighbor_ids).notnull().sum(dim="id")
-            )
-            median = ds_pws.sel(id=neighbor_ids).rainfall.median(dim="id")
-
+        nr_nbrs_not_nan = ds_pws.rainfall.sel(id=neighbor_ids).notnull().sum(dim="id")
         nbrs_not_nan.append(nr_nbrs_not_nan)
+
+        median = ds_pws.sel(id=neighbor_ids).rainfall.median(dim="id")
         reference.append(median)
 
     ds_pws["nbrs_not_nan"] = xr.concat(nbrs_not_nan, dim="id")

@@ -1,11 +1,6 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
-
-# import bias_correction
-# Get the absolute path to the project root
-# project_root = r"/home/IWS/seidel/github/pypwsqc"  # Adjust as needed
-# sys.path.append(str(project_root))
 from src.pypwsqc import bias_correction
 
 

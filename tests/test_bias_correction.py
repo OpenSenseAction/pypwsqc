@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
-from src.pypwsqc import bias_correction
+from pypwsqc import bias_correction
 
 
 def test_fit_gamma_with_threshold_empty_data():

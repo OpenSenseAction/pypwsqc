@@ -27,9 +27,9 @@ def test_fit_gamma_with_threshold_raises_invalid_mean_variance():
 
 
 def test_fit_gamma_with_threshold_consistency():
-    np.random.seed(42)
+    rng = np.random.default_rng(seed=42)
     shape_true, scale_true = 0.8, 2.0
-    data = np.random.gamma(shape=shape_true, scale=scale_true, size=50)
+    data = rng.gamma(shape=shape_true, scale=scale_true, size=50)
     threshold = 0.1
 
     a, b, p0 = bias_correction.fit_gamma_with_threshold(data, threshold)
@@ -42,12 +42,12 @@ def test_fit_gamma_with_threshold_consistency():
 
 
 def test_fit_gamma_with_threshold_params_compared_method_moments():
-    np.random.seed(123)
+    rng = np.random.default_rng(seed=123)
     shape_true, scale_true = 0.8, 2.0
     threshold = 0.001
 
     # Small synthetic sample, still enough for fitting
-    data = np.random.gamma(shape_true, scale_true, size=500)
+    data = rng.gamma(shape_true, scale_true, size=500)
 
     # Fit the censored gamma
     a_fit, b_fit, p0_fit = bias_correction.fit_gamma_with_threshold(data, threshold)

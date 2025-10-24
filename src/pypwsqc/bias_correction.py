@@ -85,7 +85,7 @@ def _negative_log_likelihood(initial_guess, threshold, raindata, raindata_trs):
     aa, bb = initial_guess
 
     if aa == 0 or bb == 0:
-        msg = 'Gamma Dist not defined for params == 0!'
+        msg = "Gamma Dist not defined for params == 0!"
         raise ValueError(msg)
 
     y = stats.gamma.pdf(raindata_trs, a=aa, loc=0, scale=bb)

@@ -119,8 +119,8 @@ def fit_gamma_params_with_threshold(
     """
     try:
         initial_guess, raindata, raindata_trs, p0 = _data_preprocessing(data, threshold)
-    except Exception as e:
-        print(f"Preprocessing failed: {e}")
+    except ValueError:
+        print("Preprocessing failed")
         return np.nan, np.nan, np.nan
 
     # Handle failed preprocessing

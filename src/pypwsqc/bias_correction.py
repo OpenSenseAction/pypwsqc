@@ -139,7 +139,7 @@ def fit_gamma_params_with_threshold(
     if result.success:
         a_opt, b_opt = result.x
         return a_opt, b_opt, p0
-    return (np.nan,np.nan, np.nan)
+    return (np.nan, np.nan, np.nan)
 
 
 def qq_gamma(

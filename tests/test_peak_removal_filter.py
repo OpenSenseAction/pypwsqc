@@ -1084,7 +1084,7 @@ def create_test_weights_da_ref():
     )
 
 
-def test_convert_to_utm():
+def test_add_proj_coords_to_ds():
     # Arrange (setup)
     start_time = np.datetime64("2025-04-01T00:00:00", "ns")
     end_time = np.datetime64("2025-04-01T08:00:00", "ns")
@@ -1113,25 +1113,25 @@ def test_convert_to_utm():
     )
     x_expected = np.array(
         [
-            524883.44425925,
-            507760.54114806,
-            573534.35633562,
-            507601.05538652,
-            513432.95916921,
+            966874.5167846535,
+            948747.9700085114,
+            1017506.1839709862,
+            948586.9358490785,
+            954238.2302017424,
         ]
     )
     y_expected = np.array(
         [
-            5386185.46713846,
-            5399019.60369594,
-            5360947.83933791,
-            5399040.50555781,
-            5401281.78784132,
+            5405545.005227672,
+            5417020.947108718,
+            5384143.439689567,
+            5417029.240694353,
+            5419729.805045703,
         ]
     )
 
     # Act (execute)
-    test_ds_utm = prf.convert_to_utm(test_ds, "lon", "lat", 32)
+    test_ds_utm = prf.add_proj_coords_to_ds(test_ds, "lon", "lat", "EPSG:25831")
 
     # Assert (check)
     np.testing.assert_almost_equal(
@@ -1182,6 +1182,25 @@ def test_get_nan_sequences():
 
     # Act (execute)
     new_data = prf.get_nan_sequences(test_ds, "test_station", 0.95, 0)
+
+    # Assert (check)
+    np.testing.assert_almost_equal(
+        new_data, expected_data, err_msg="\nThe data is not equal!\n"
+    )
+
+
+def test_get_nan_sequences_no_peaks():
+    # Arrange (setup)
+    test_ds = create_test_ds()
+    expected_data = (
+        [],
+        [],
+        [],
+        [],
+    )
+
+    # Act (execute)
+    new_data = prf.get_nan_sequences(test_ds, "test_station", 0.99, 1000000000000)
 
     # Assert (check)
     np.testing.assert_almost_equal(
@@ -1248,6 +1267,42 @@ def test_print_info_with_ref():
         np.float64(100.0),
         4,
         4,
+    ]
+
+    # Act (execute)
+    new_data = prf.print_info(
+        test_ds,
+        "test_station",
+        3000,
+        5,
+        0.95,
+        time_peak_lst,
+        seq_len_lst,
+        aa_closest_neighbors,
+        ab_closest_neighbors,
+    )
+
+    # Assert (check)
+    np.testing.assert_almost_equal(
+        new_data, expected_data, err_msg="\nThe data is not equal!\n"
+    )
+
+
+def test_print_info_no_peaks():
+    # Arrange (setup)
+    test_ds = create_test_ds()
+    time_peak_lst = []
+    seq_len_lst = []
+    aa_closest_neighbors = create_test_closest_neighbors_ds_ds()
+    ab_closest_neighbors = None
+
+    expected_data = [
+        np.float64(1.9149999999999991),
+        0,
+        np.float64(0.0),
+        np.float64(0.0),
+        4,
+        0,
     ]
 
     # Act (execute)
@@ -1432,6 +1487,36 @@ def test_interpolate_precipitation_ds_ds_ref():
         )
 
 
+def test_interpolate_precipitation_no_peaks():
+    # Arrange (setup)
+    test_ds = create_test_ds()
+    closest_neighbors = create_test_closest_neighbors_no_neighbors()
+    weights_da = create_test_weights_da()
+    time_peak_lst = []
+    seq_start_lst = []
+    seq_len_lst = []
+
+    expected_data = []
+
+    # Act (execute)
+    new_data = prf.interpolate_precipitation(
+        test_ds,
+        "test_station",
+        closest_neighbors,
+        weights_da,
+        seq_start_lst,
+        time_peak_lst,
+        seq_len_lst,
+        0.5,
+        4,
+    )
+
+    # Assert (check)
+    np.testing.assert_almost_equal(
+        new_data, expected_data, err_msg="\nThe data is not equal!\n"
+    )
+
+
 def test_distribute_peak_ds_ds():
     # Arrange (setup)
     test_ds = create_test_ds()
@@ -1540,6 +1625,23 @@ def test_distribute_peak_ds_ds_ref():
         np.testing.assert_almost_equal(
             new_data[i], expected_data[i], err_msg="\nThe data is not equal!\n"
         )
+
+
+def test_distribute_peak_no_peaks():
+    # Arrange (setup)
+    test_ds = create_test_ds()
+    time_peak_lst = []
+    seqs_lst = []
+
+    expected_data = []
+
+    # Act (execute)
+    new_data = prf.distribute_peak(test_ds, "test_station", time_peak_lst, seqs_lst)
+
+    # Assert (check)
+    np.testing.assert_almost_equal(
+        new_data, expected_data, err_msg="\nThe data is not equal!\n"
+    )
 
 
 def test_overwrite_seq_ds_ds():
@@ -1836,6 +1938,30 @@ def test_overwrite_seq_ds_ds_ref():
             1.37644788,
         ]
     )
+
+    # Act (execute)
+    new_data = (
+        prf.overwrite_seq(
+            test_ds, "test_station", seqs_corr_lst, seq_start_lst, time_peak_lst
+        )
+        .sel(id="test_station")
+        .rainfall.to_numpy()
+    )
+
+    # Assert (check)
+    np.testing.assert_almost_equal(
+        new_data, expected_data, err_msg="\nThe data is not equal!\n"
+    )
+
+
+def test_overwrite_seq_no_peaks():
+    # Arrange (setup)
+    test_ds = create_test_ds()
+    seqs_corr_lst = []
+    seq_start_lst = []
+    time_peak_lst = []
+
+    expected_data = test_ds.sel(id="test_station").rainfall.to_numpy()
 
     # Act (execute)
     new_data = (

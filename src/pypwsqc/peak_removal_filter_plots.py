@@ -3,19 +3,20 @@
 # import packages
 import matplotlib.pyplot as plt
 import numpy as np
+import xarray as xr
 from matplotlib.lines import Line2D
 from matplotlib.patches import Circle
 
 
 def plot_station_neighbors(
-    a_dataset,
-    b_dataset,
-    station,
-    aa_closest_neighbors,
-    ab_closest_neighbors,
-    max_distance,
-    zoom=True,
-):
+    a_dataset: xr.DataArray,
+    b_dataset: xr.DataArray | None,
+    station: str,
+    aa_closest_neighbors: xr.Dataset,
+    ab_closest_neighbors: xr.Dataset | None,
+    max_distance: float,
+    zoom: bool = True,
+) -> tuple[plt.Figure, plt.Axes]:
     """Plot the neighbor stations of a selected station.
 
     Parameters
@@ -219,18 +220,18 @@ def plot_station_neighbors(
 
 
 def plot_peak(
-    dataset,
-    data_corr,
-    station,
-    quantile,
-    peak_num,
-    seq_start_lst,
-    time_peak_lst,
-    seq_end_lst,
-    seq_len_lst,
-    data_is_corrected=False,
-    zoom_out=15,
-):
+    dataset: xr.DataArray,
+    data_corr: xr.Dataset | None,
+    station: str,
+    quantile: float,
+    peak_num: int,
+    seq_start_lst: list,
+    time_peak_lst: list,
+    seq_end_lst: list,
+    seq_len_lst: list,
+    data_is_corrected: bool = False,
+    zoom_out: int = 15,
+) -> tuple[plt.Figure, plt.Axes]:
     """Plot the rainfall of the station with the (corrected) peaks.
 
     Parameters
@@ -422,7 +423,7 @@ def plot_peak(
                     markersize=8,
                     markeredgewidth=1.5,
                     linestyle="",
-                    label="legit values",
+                    label="valid values",
                 ),
                 Line2D(
                     [0],
@@ -466,7 +467,7 @@ def plot_peak(
                     markersize=8,
                     markeredgewidth=1.5,
                     linestyle="",
-                    label="legit values",
+                    label="valid values",
                 ),
                 Line2D(
                     [0],
@@ -510,7 +511,7 @@ def plot_peak(
                 markersize=8,
                 markeredgewidth=1.5,
                 linestyle="",
-                label="legit values",
+                label="valid values",
             ),
             Line2D(
                 [0],

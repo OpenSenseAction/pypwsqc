@@ -3,13 +3,18 @@
 # import packages
 import numpy as np
 import poligrain as plg
-import pyproj
 import xarray as xr
+from poligrain.spatial import project_point_coordinates
 from tqdm import tqdm
 
 
-def convert_to_utm(dataset, name_coord_lon, name_coord_lat, zone):
-    """Convert lon and lat from WGS84 to UTM (zone) and add them as x and y coordinates.
+def add_proj_coords_to_ds(
+    dataset: xr.Dataset,
+    name_coord_lon: str,
+    name_coord_lat: str,
+    target_projection: str,
+) -> xr.Dataset:
+    """Project longitude and latitude and add projected coordinates as x and y.
 
     Parameters
     ----------
@@ -19,27 +24,34 @@ def convert_to_utm(dataset, name_coord_lon, name_coord_lat, zone):
         Name of the longitude coordinate in the dataset.
     name_coord_lat : str
         Name of the latitude coordinate in the dataset.
+    target_projection : str
+        An EPSG string that defines the projection the points shall be projected too,
+        e.g. "EPSG:25832" for UTM zone 32N
 
     Returns
     -------
     xr.Dataset
-        The dataset with added x and y coordinates in UTM (zone).
+        The dataset with added x and y as projected coordinates.
     """
-    lon = dataset[name_coord_lon].to_numpy()
-    lat = dataset[name_coord_lat].to_numpy()
-    projection = pyproj.Proj(proj="utm", zone=zone, ellps="WGS84", preserve_units=True)
+    lon = dataset[name_coord_lon]
+    lat = dataset[name_coord_lat]
 
-    x, y = projection(lon, lat)
+    x, y = project_point_coordinates(lon, lat, target_projection)
 
-    dataset = dataset.assign_coords({"x": (("id"), x), "y": (("id"), y)})
-    dataset.coords["x"].attrs["units"] = f"meters (UTM {zone})"
-    dataset.coords["y"].attrs["units"] = f"meters (UTM {zone})"
+    dataset = dataset.assign_coords(
+        {"x": (("id"), x.to_numpy()), "y": (("id"), y.to_numpy())}
+    )
+    dataset.coords["x"].attrs["units"] = f"meters, {target_projection}"
+    dataset.coords["y"].attrs["units"] = f"meters, {target_projection}"
     return dataset
 
 
 def get_closest_points_to_point(
-    ds_points, ds_points_neighbors, max_distance, n_closest
-):
+    ds_points: xr.Dataset,
+    ds_points_neighbors: xr.Dataset,
+    max_distance: float,
+    n_closest: int,
+) -> xr.Dataset:
     """Get the closest points for given point locations.
 
     Note that both datasets that are passed as input have to have the variables x and y
@@ -54,6 +66,7 @@ def get_closest_points_to_point(
     ds_points_neighbors : xr.DataArray | xr.Dataset
         This is the dataset from which the nearest neighbors will be looked up.
     max_distance : float
+        In meters.
         The allowed distance of neighbors has to be smaller than max_distance.
         The unites are the units used for the projected coordinates x and y in the
         two datasets.
@@ -74,7 +87,9 @@ def get_closest_points_to_point(
     )
 
 
-def get_nan_sequences(dataset, station, quantile, seq_len_threshold):
+def get_nan_sequences(
+    dataset: xr.Dataset, station: str, quantile: float, seq_len_threshold: int
+) -> tuple[list[np.datetime64], list[np.datetime64], list[np.datetime64], list[int]]:
     """Find values higher than the threshold and check for leading nan sequences.
 
     If there are leading nan sequences, find the start and end of the sequence and the
@@ -149,20 +164,28 @@ def get_nan_sequences(dataset, station, quantile, seq_len_threshold):
             seq_start_lst.append(seq_start)
             seq_end_lst.append(time_peak - timedelta)
             seq_len_lst.append(length)
+
+    if len(time_peak_lst) == 0:
+        print(
+            f"\nNo peaks found for station {station} "
+            f"with quantile={quantile} and "
+            f"seq_len_threshold={seq_len_threshold}."
+        )
+
     return time_peak_lst, seq_start_lst, seq_end_lst, seq_len_lst
 
 
 def print_info(
-    dataset,
-    station,
-    max_distance,
-    n_closest,
-    quantile,
-    time_peak_lst,
-    seq_len_lst,
-    aa_closest_neighbors,
-    ab_closest_neighbors,
-):
+    dataset: xr.Dataset,
+    station: str,
+    max_distance: float,
+    n_closest: int,
+    quantile: float,
+    time_peak_lst: list[np.datetime64],
+    seq_len_lst: list[int],
+    aa_closest_neighbors: xr.Dataset,
+    ab_closest_neighbors: xr.Dataset | None = None,
+) -> tuple[float, int, float, float, int, int]:
     """
     Print some information about the selected station.
 
@@ -193,12 +216,15 @@ def print_info(
 
     Return
     ------
-    None
+    info_lst : list
+        Just for testing purposes.
     """
     info_lst = []
     _quantile = np.nanquantile(dataset.sel(id=station).rainfall.to_numpy(), quantile)
     num_peaks = len(time_peak_lst)
-    avg_seq_len = round(np.mean(seq_len_lst), 2)
+
+    avg_seq_len = round(np.mean(seq_len_lst), 2) if len(seq_len_lst) != 0 else 0.0
+
     perc_nans = round(
         (
             np.sum(seq_len_lst)
@@ -253,7 +279,7 @@ def print_info(
     return info_lst
 
 
-def inverse_distance_weighting(closest_neighbors):
+def inverse_distance_weighting(closest_neighbors: xr.Dataset) -> xr.DataArray:
     """Calculate weights for the closest neighbors, applying inverse distance weighting.
 
     Parameters
@@ -302,16 +328,16 @@ def inverse_distance_weighting(closest_neighbors):
 
 
 def interpolate_precipitation(
-    dataset,
-    station,
-    closest_neighbors,
-    weights_da,
-    seq_start_lst,
-    time_peak_lst,
-    seq_len_lst,
-    seq_nan_threshold=float,
-    min_station_threshold=int,
-):
+    dataset: xr.Dataset,
+    station: str,
+    closest_neighbors: xr.Dataset,
+    weights_da: xr.DataArray,
+    seq_start_lst: list[np.datetime64],
+    time_peak_lst: list[np.datetime64],
+    seq_len_lst: list[int],
+    seq_nan_threshold: float,
+    min_station_threshold: int,
+) -> list[np.ndarray[float]]:
     """Interpolate the precipitation values to obtain the "precipitation shape/profile".
 
     Parameters
@@ -358,6 +384,10 @@ def interpolate_precipitation(
     else:
         neighbors = closest_neighbors.sel(id=station).neighbor_id.to_numpy()
         weights = weights_da.sel(id=station).to_numpy()
+
+    if np.all([value is None for value in neighbors]):
+        print(f"No neighbors found for station {station}.")
+        return []
 
     all_neighbors_seqs = []
     # list of lists. Each list corresponds to one neighbor containing his time series
@@ -436,7 +466,9 @@ def interpolate_precipitation(
     return seqs_lst
 
 
-def distribute_peak(dataset, station, time_peak_lst, seqs_lst):
+def distribute_peak(
+    dataset: xr.DataArray, station: str, time_peak_lst: list, seqs_lst: list
+) -> list[np.ndarray[float]]:
     """Distribute the peak  following the "precipitation shape/profile".
 
     Parameters
@@ -457,6 +489,9 @@ def distribute_peak(dataset, station, time_peak_lst, seqs_lst):
        List of arrays containing the values of the distributet peak for the
        nan sequences.
     """
+    if len(seqs_lst) == 0:
+        print(f"No sequences found for station {station}.")
+        return []
     seqs_corr_lst = []
     # iterate over all peaks (nan sequences) of the selected station
     for time_peak, seq_num in tqdm(
@@ -486,7 +521,13 @@ def distribute_peak(dataset, station, time_peak_lst, seqs_lst):
     return seqs_corr_lst
 
 
-def overwrite_seq(dataset, station, seqs_corr_lst, seq_start_lst, time_peak_lst):
+def overwrite_seq(
+    dataset: xr.DataArray,
+    station: str,
+    seqs_corr_lst: list,
+    seq_start_lst: list,
+    time_peak_lst: list,
+) -> xr.Dataset:
     """Overwrite the sequence of nan values leading a peak with the corrected sequences.
 
     Parameters
@@ -508,6 +549,9 @@ def overwrite_seq(dataset, station, seqs_corr_lst, seq_start_lst, time_peak_lst)
         Dataset, following the OpenSense data format standards with the corrected peaks
         and nan sequences.
     """
+    if len(seqs_corr_lst) == 0:
+        print(f"No corrected sequences found for station {station}.")
+        return dataset
     # create a copy of the dataset
     data_corr = dataset.copy(deep=True)
     data_corr.load()

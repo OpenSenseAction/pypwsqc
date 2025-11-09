@@ -1,6 +1,8 @@
 """Skript with functions for the peak removal filter."""
 
 # import packages
+from typing import Union
+
 import numpy as np
 import poligrain as plg
 import xarray as xr
@@ -184,7 +186,7 @@ def print_info(
     time_peak_lst: list[np.datetime64],
     seq_len_lst: list[int],
     aa_closest_neighbors: xr.Dataset,
-    ab_closest_neighbors: xr.Dataset | None = None,
+    ab_closest_neighbors: Union[xr.Dataset, None] = None,
 ) -> tuple[float, int, float, float, int, int]:
     """
     Print some information about the selected station.

@@ -1,6 +1,8 @@
 """Skript with functions for plots for the peak removal filter."""
 
 # import packages
+from typing import Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
@@ -10,10 +12,10 @@ from matplotlib.patches import Circle
 
 def plot_station_neighbors(
     a_dataset: xr.DataArray,
-    b_dataset: xr.DataArray | None,
+    b_dataset: Union[xr.DataArray, None],
     station: str,
     aa_closest_neighbors: xr.Dataset,
-    ab_closest_neighbors: xr.Dataset | None,
+    ab_closest_neighbors: Union[xr.Dataset, None],
     max_distance: float,
     zoom: bool = True,
 ) -> tuple[plt.Figure, plt.Axes]:
@@ -221,7 +223,7 @@ def plot_station_neighbors(
 
 def plot_peak(
     dataset: xr.DataArray,
-    data_corr: xr.Dataset | None,
+    data_corr: Union[xr.Dataset, None],
     station: str,
     quantile: float,
     peak_num: int,

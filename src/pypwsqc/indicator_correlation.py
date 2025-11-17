@@ -208,13 +208,22 @@ def ic_filter(
     bins = np.arange(0, max_distance, bin_size)
 
     # quantile parameter not too low, otherwise the line becomes to wiggly - depends on data  # noqa: E501
-    binned_indcorr_ref = (
-        indicator_correlation_matrix_ref.groupby_bins(
-            distance_correlation_matrix_ref, bins=bins
+    try:
+        binned_indcorr_ref = (
+            indicator_correlation_matrix_ref.groupby_bins(
+                distance_correlation_matrix_ref, bins=bins
+            )
+            .quantile(quantile_bin_ref)
+            .bfill(dim="group_bins")
         )
-        .quantile(quantile_bin_ref)
-        .bfill(dim="group_bins")
-    )
+    except ValueError as e:
+        if "([0])" in str(e):
+           print("Insert a valid bin_size")
+           return
+       
+        else:
+           print("Set a new, larger max_distance and recalculate the indcorr_mtx")
+           return
 
     # Function for Rank Sum Weights
     # Calculates weights according to length to data set
@@ -229,25 +238,30 @@ def ic_filter(
     pws_indcorr_score_list = []
 
     # iterates over REF (id)
-    for pws_id in indicator_correlation_matrix["id_neighbor"].values:  # noqa: PD011
-        binned_indcorr_pws = (
-            indicator_correlation_matrix.sel(id_neighbor=pws_id)
-            .groupby_bins(distance_matrix.sel(id_neighbor=pws_id), bins=bins)
-            .quantile(quantile_bin_pws, skipna=True)
-        )
+    try:
+        for pws_id in indicator_correlation_matrix["id_neighbor"].values:  # noqa: PD011
+            binned_indcorr_pws = (
+                indicator_correlation_matrix.sel(id_neighbor=pws_id)
+                .groupby_bins(distance_matrix.sel(id_neighbor=pws_id), bins=bins)
+                .quantile(quantile_bin_pws, skipna=True)
+            )
 
-        indcorr_good = binned_indcorr_pws + threshold > binned_indcorr_ref
+            indcorr_good = binned_indcorr_pws + threshold > binned_indcorr_ref
 
-        # Bool Information if PWS passed Indicator Correlation Test
-        pws_indcorr_good_list.append(indcorr_good.any())
+            # Bool Information if PWS passed Indicator Correlation Test
+            pws_indcorr_good_list.append(indcorr_good.any())
 
-        # Valid bins for normed weights
-        valid_bins = np.isfinite(binned_indcorr_pws.values)
-        rank_sum_weights = rsw(len(indcorr_good))
-        normed_weights = sum(valid_bins * np.array(rank_sum_weights))
+            # Valid bins for normed weights
+            valid_bins = np.isfinite(binned_indcorr_pws.values)
+            rank_sum_weights = rsw(len(indcorr_good))
+            normed_weights = sum(valid_bins * np.array(rank_sum_weights))
 
-        score = sum(indcorr_good.values * np.array(rank_sum_weights)) / normed_weights  # noqa: PD011
-        pws_indcorr_score_list.append(score)
+            score = sum(indcorr_good.values * np.array(rank_sum_weights)) / normed_weights  # noqa: PD011
+            pws_indcorr_score_list.append(score)
+    except:
+        ValueError
+        print('"Set a new, larger max_distance and recalculate the indcorr_mtx". Use for example plg.spatial.get_closest_points_to_point()')
+        return
 
     result = indicator_correlation_matrix.to_dataset(name="indcorr")
     result["dist"] = distance_matrix

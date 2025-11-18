@@ -218,12 +218,11 @@ def ic_filter(
         )
     except ValueError as e:
         if "([0])" in str(e):
-           print("Insert a valid bin_size")
-           raise
-       
-        else:
-           print("Set a new, larger max_distance and recalculate the indcorr_mtx")
-           raise
+            msg = "Insert a valid bin_size"
+            raise ValueError(msg) from e
+
+        msg = "Set a new, larger max_distance and recalculate the indcorr_mtx"
+        raise ValueError(msg) from e
 
     # Function for Rank Sum Weights
     # Calculates weights according to length to data set
@@ -245,10 +244,12 @@ def ic_filter(
                 .groupby_bins(distance_matrix.sel(id_neighbor=pws_id), bins=bins)
                 .quantile(quantile_bin_pws, skipna=True)
             )
-        except:
-            ValueError
-            print('"Set a new, larger max_distance and recalculate the indcorr_mtx". Use for example plg.spatial.get_closest_points_to_point()')
-            raise
+        except ValueError as e:
+            msg = (
+                "Set a new, larger max_distance and recalculate the indcorr_mtx."
+                "Use for example plg.spatial.get_closest_points_to_point()"
+            )
+            raise ValueError(msg) from e
 
         indcorr_good = binned_indcorr_pws + threshold > binned_indcorr_ref
 
@@ -262,7 +263,6 @@ def ic_filter(
 
         score = sum(indcorr_good.values * np.array(rank_sum_weights)) / normed_weights  # noqa: PD011
         pws_indcorr_score_list.append(score)
-
 
     result = indicator_correlation_matrix.to_dataset(name="indcorr")
     result["dist"] = distance_matrix

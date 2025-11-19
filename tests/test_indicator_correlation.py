@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import numpy.testing as npt
 import poligrain as plg
@@ -223,7 +225,7 @@ def test_indicator_correlation_filter_max_distance_fits_none():
     )
     with pytest.raises(
         ValueError,
-        match="Set a new, larger max_distance" "and recalculate the indcorr_mtx",
+        match="Set a new, larger max_distance and recalculate the indcorr_mtx",
     ):
         ic.ic_filter(
             indicator_correlation_matrix_ref=ind1,
@@ -251,16 +253,19 @@ def test_indicator_correlation_filter_max_distance_fits_some():
         prob=0.99,
         min_valid_overlap=2 * 24 * 30,
     )
-    with pytest.raises(
-        ValueError,
-        match="Set a new, larger max_distance and recalculate"
-        "the indcorr_mtx. Use for example plg.spatial.get_closest_points_to_point()",
-    ):
-        ic.ic_filter(
-            indicator_correlation_matrix_ref=ind1,
-            distance_correlation_matrix_ref=dist1,
-            indicator_correlation_matrix=ind1,
-            distance_matrix=dist1,
-            max_distance=1200,
-            bin_size=200,
-        )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        with pytest.raises(
+            ValueError,
+            match="Set a new, larger max_distance and recalculate "
+            "the indcorr_mtx. Use for example plg.spatial.get_closest_points_to_point()",
+        ):
+            ic.ic_filter(
+                indicator_correlation_matrix_ref=ind1,
+                distance_correlation_matrix_ref=dist1,
+                indicator_correlation_matrix=ind1,
+                distance_matrix=dist1,
+                max_distance=1200,
+                bin_size=200,
+            )

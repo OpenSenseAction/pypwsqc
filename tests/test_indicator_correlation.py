@@ -249,7 +249,7 @@ def test_indicator_correlation_filter_max_distance_fits_some():
     dist1, ind1 = ic.indicator_distance_matrix(
         ds_a.rainfall,
         ds_a.rainfall,
-        max_distance=900,
+        max_distance=1200,
         prob=0.99,
         min_valid_overlap=2 * 24 * 30,
     )

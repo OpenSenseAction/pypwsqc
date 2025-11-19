@@ -246,7 +246,7 @@ def ic_filter(
             )
         except ValueError as e:
             msg = (
-                "Set a new, larger max_distance and recalculate the indcorr_mtx."
+                "Set a new, larger max_distance and recalculate the indcorr_mtx. "
                 "Use for example plg.spatial.get_closest_points_to_point()"
             )
             raise ValueError(msg) from e

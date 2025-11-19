@@ -191,3 +191,76 @@ def test_indicator_correlation_filter():
     npt.assert_almost_equal(indcorr_results_orig.indcorr_good.sum(), 19)
     npt.assert_almost_equal(indcorr_results_manip.indcorr_good.sum(), 18)
     assert indcorr_results_manip.indcorr_good.data[0] == False  # noqa: E712
+
+
+def test_indicator_correlation_filter_wrong_bin_size():
+    with pytest.raises(ValueError, match="Insert a valid bin_size"):
+        ic.ic_filter(
+            indicator_correlation_matrix_ref=xr.DataArray(np.array([[1]])),
+            distance_correlation_matrix_ref=xr.DataArray(np.array([[1]])),
+            indicator_correlation_matrix=xr.DataArray(np.array([[1]])),
+            distance_matrix=xr.DataArray(np.array([[1]])),
+            max_distance=30000,
+            bin_size=30000,
+        )
+
+
+def test_indicator_correlation_filter_max_distance_fits_none():
+    ds_a = xr.open_dataset("./docs/notebooks/data/RadarRef_AMS.nc")
+    ds_a.load()
+    ds_a.coords["x"], ds_a.coords["y"] = plg.spatial.project_point_coordinates(
+        ds_a.lon,
+        ds_a.lat,
+        target_projection="EPSG:25832",
+    )
+
+    dist1, ind1 = ic.indicator_distance_matrix(
+        ds_a.rainfall,
+        ds_a.rainfall,
+        max_distance=900,
+        prob=0.99,
+        min_valid_overlap=2 * 24 * 30,
+    )
+    with pytest.raises(
+        ValueError,
+        match="Set a new, larger max_distance" "and recalculate the indcorr_mtx",
+    ):
+        ic.ic_filter(
+            indicator_correlation_matrix_ref=ind1,
+            distance_correlation_matrix_ref=dist1,
+            indicator_correlation_matrix=ind1,
+            distance_matrix=dist1,
+            max_distance=900,
+            bin_size=100,
+        )
+
+
+def test_indicator_correlation_filter_max_distance_fits_some():
+    ds_a = xr.open_dataset("./docs/notebooks/data/RadarRef_AMS.nc")
+    ds_a.load()
+    ds_a.coords["x"], ds_a.coords["y"] = plg.spatial.project_point_coordinates(
+        ds_a.lon,
+        ds_a.lat,
+        target_projection="EPSG:25832",
+    )
+
+    dist1, ind1 = ic.indicator_distance_matrix(
+        ds_a.rainfall,
+        ds_a.rainfall,
+        max_distance=900,
+        prob=0.99,
+        min_valid_overlap=2 * 24 * 30,
+    )
+    with pytest.raises(
+        ValueError,
+        match="Set a new, larger max_distance and recalculate"
+        "the indcorr_mtx. Use for example plg.spatial.get_closest_points_to_point()",
+    ):
+        ic.ic_filter(
+            indicator_correlation_matrix_ref=ind1,
+            distance_correlation_matrix_ref=dist1,
+            indicator_correlation_matrix=ind1,
+            distance_matrix=dist1,
+            max_distance=1200,
+            bin_size=200,
+        )

@@ -61,7 +61,7 @@ def plot_station_neighbors(
     if b_dataset is not None:
         x_ref = b_dataset.x.to_numpy()
         y_ref = b_dataset.y.to_numpy()
-        ab_neigbors = ab_closest_neighbors.sel(id=station).neighbor_id.to_numpy()
+        ab_neighbors = ab_closest_neighbors.sel(id=station).neighbor_id.to_numpy()
 
     s = 10 if zoom else 2
 
@@ -72,7 +72,9 @@ def plot_station_neighbors(
         plt.scatter(x=x_ref, y=y_ref, s=s, color="black", alpha=0.5)
 
     for neighbor in aa_neighbor:
-        if neighbor is None:
+        if neighbor is None or not np.isnan(
+            neighbor
+        ):  # check if neighbor is None or nan
             continue
         plt.scatter(
             a_dataset.sel(id=neighbor).x.to_numpy(),
@@ -82,8 +84,10 @@ def plot_station_neighbors(
             alpha=0.5,
         )
     if b_dataset is not None:
-        for neighbor_ref in ab_neigbors:
-            if neighbor_ref is None:
+        for neighbor_ref in ab_neighbors:
+            if neighbor_ref is None or not np.isnan(
+                neighbor_ref
+            ):  # check if neighbor is None or nan
                 continue
             plt.scatter(
                 b_dataset.sel(id=neighbor_ref).x.to_numpy(),

@@ -1181,7 +1181,9 @@ def test_get_nan_sequences():
     )
 
     # Act (execute)
-    new_data = prf.get_nan_sequences(test_ds, "test_station", 0.95, 0)
+    new_data = prf.get_nan_sequences(
+        test_ds, "test_station", 0.95, seq_len_min=0, seq_len_max=100
+    )
 
     # Assert (check)
     np.testing.assert_almost_equal(
@@ -1200,7 +1202,9 @@ def test_get_nan_sequences_no_peaks():
     )
 
     # Act (execute)
-    new_data = prf.get_nan_sequences(test_ds, "test_station", 0.99, 1000000000000)
+    new_data = prf.get_nan_sequences(
+        test_ds, "test_station", 0.99, seq_len_min=10, seq_len_max=100
+    )
 
     # Assert (check)
     np.testing.assert_almost_equal(

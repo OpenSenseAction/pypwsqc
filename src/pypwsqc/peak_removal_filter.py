@@ -226,7 +226,7 @@ def print_info(
     pws_neighbors = (
         np.count_nonzero(
             [
-                not np.isnan(val)
+                isinstance(val, str)
                 for val in aa_closest_neighbors.sel(id=station).neighbor_id.to_numpy()
             ]
         )
@@ -254,7 +254,7 @@ def print_info(
     else:
         ref_neighbors = np.count_nonzero(
             [
-                not np.isnan(val)
+                isinstance(val, str)
                 for val in ab_closest_neighbors.sel(id=station).neighbor_id.to_numpy()
             ]
         )

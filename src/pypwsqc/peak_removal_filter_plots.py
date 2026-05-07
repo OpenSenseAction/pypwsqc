@@ -72,9 +72,7 @@ def plot_station_neighbors(
         plt.scatter(x=x_ref, y=y_ref, s=s, color="black", alpha=0.5)
 
     for neighbor in aa_neighbor:
-        if neighbor is None or not np.isnan(
-            neighbor
-        ):  # check if neighbor is None or nan
+        if not isinstance(neighbor, str):  # check if neighbor is None or nan
             continue
         plt.scatter(
             a_dataset.sel(id=neighbor).x.to_numpy(),
@@ -85,9 +83,7 @@ def plot_station_neighbors(
         )
     if b_dataset is not None:
         for neighbor_ref in ab_neighbors:
-            if neighbor_ref is None or not np.isnan(
-                neighbor_ref
-            ):  # check if neighbor is None or nan
+            if not isinstance(neighbor_ref, str):  # check if neighbor is None or nan
                 continue
             plt.scatter(
                 b_dataset.sel(id=neighbor_ref).x.to_numpy(),

@@ -4,6 +4,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import xarray as xr
 from matplotlib.lines import Line2D
 from matplotlib.patches import Circle
@@ -71,7 +72,7 @@ def plot_station_neighbors(
         plt.scatter(x=x_ref, y=y_ref, s=s, color="black", alpha=0.5)
 
     for neighbor in aa_neighbor:
-        if neighbor is None:
+        if pd.isna(neighbor):
             continue
         plt.scatter(
             a_dataset.sel(id=neighbor).x.to_numpy(),
@@ -82,7 +83,7 @@ def plot_station_neighbors(
         )
     if b_dataset is not None:
         for neighbor_ref in ab_neigbors:
-            if neighbor_ref is None:
+            if pd.isna(neighbor_ref):
                 continue
             plt.scatter(
                 b_dataset.sel(id=neighbor_ref).x.to_numpy(),

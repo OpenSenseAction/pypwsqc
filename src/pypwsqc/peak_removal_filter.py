@@ -3,6 +3,7 @@
 # import packages
 
 import numpy as np
+import pandas as pd
 import poligrain as plg
 import xarray as xr
 from poligrain.spatial import project_point_coordinates
@@ -237,8 +238,7 @@ def print_info(
     pws_neighbors = (
         np.count_nonzero(
             [
-                aa_closest_neighbors.sel(id=station).neighbor_id.to_numpy()[i]
-                is not None
+                pd.notna(aa_closest_neighbors.sel(id=station).neighbor_id.to_numpy()[i])
                 for i in range(
                     len(aa_closest_neighbors.sel(id=station).neighbor_id.to_numpy())
                 )
@@ -268,8 +268,7 @@ def print_info(
     else:
         ref_neighbors = np.count_nonzero(
             [
-                ab_closest_neighbors.sel(id=station).neighbor_id.to_numpy()[i]
-                is not None
+                pd.notna(ab_closest_neighbors.sel(id=station).neighbor_id.to_numpy()[i])
                 for i in range(
                     len(aa_closest_neighbors.sel(id=station).neighbor_id.to_numpy())
                 )
@@ -386,7 +385,7 @@ def interpolate_precipitation(
         neighbors = closest_neighbors.sel(id=station).neighbor_id.to_numpy()
         weights = weights_da.sel(id=station).to_numpy()
 
-    if np.all([value is None for value in neighbors]):
+    if np.all([pd.isna(value) for value in neighbors]):
         print(f"No neighbors found for station {station}.")
         return []
 
@@ -398,14 +397,12 @@ def interpolate_precipitation(
         neighbors,
         desc="Get precipitation values from neighbors",
         unit=" neighbors",
-        total=np.count_nonzero(
-            [neighbors[i] is not None for i in range(len(neighbors))]
-        ),
+        total=np.count_nonzero([pd.notna(neighbors[i]) for i in range(len(neighbors))]),
     ):
         neighbor_seqs = []
         # list of time series of the neighbor containing his time series with starts
         # and ends of nan sequences of the selected station
-        if neighbor is None:  # stop if there are no (no more) neighbors
+        if pd.isna(neighbor):  # stop if there are no (no more) neighbors
             break
         # iterate over all nan sequences of the selected station
         for seq_start, peak, seq_len in zip(

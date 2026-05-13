@@ -82,7 +82,7 @@ def plot_station_neighbors(
             alpha=0.5,
         )
     if b_dataset is not None:
-        for neighbor_ref in ab_neigbors:
+        for neighbor_ref in ab_neighbors:
             if pd.isna(neighbor_ref):
                 continue
             plt.scatter(

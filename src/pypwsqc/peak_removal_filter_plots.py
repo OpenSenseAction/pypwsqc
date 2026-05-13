@@ -61,7 +61,7 @@ def plot_station_neighbors(
     if b_dataset is not None:
         x_ref = b_dataset.x.to_numpy()
         y_ref = b_dataset.y.to_numpy()
-        ab_neigbors = ab_closest_neighbors.sel(id=station).neighbor_id.to_numpy()
+        ab_neighbors = ab_closest_neighbors.sel(id=station).neighbor_id.to_numpy()
 
     s = 10 if zoom else 2
 
@@ -82,7 +82,7 @@ def plot_station_neighbors(
             alpha=0.5,
         )
     if b_dataset is not None:
-        for neighbor_ref in ab_neigbors:
+        for neighbor_ref in ab_neighbors:
             if pd.isna(neighbor_ref):
                 continue
             plt.scatter(

@@ -90,23 +90,31 @@ def get_closest_points_to_point(
 
 
 def get_nan_sequences(
-    dataset: xr.Dataset, station: str, quantile: float, seq_len_threshold: int
+    dataset: xr.Dataset,
+    station: str,
+    quantile: float,
+    seq_len_min: int,
+    seq_len_max: int,
 ) -> tuple[list[np.datetime64], list[np.datetime64], list[np.datetime64], list[int]]:
     """Find values higher than the threshold and check for leading nan sequences.
 
     If there are leading nan sequences, find the start and end of the sequence and the
-    length of the sequence.
+    length of the sequence. Faster implementation using numpy indexing instead of
+    xarray selection in the inner loop.
 
     Parameters
     ----------
-    dataset : xr.DataArray
+    dataset : xr.Dataset
         Dataset, following the OpenSense data format standards.
     station : str
         Name/number of the station.
     quantile : float
         Quantile for the peak determination.
-    seq_len_threshold : int
-        Nan sequence has to be greater than seq_len_threshold to be considered for the
+    seq_len_min : int
+        Nan sequence has to be longer than seq_len_min to be considered for the
+        peak removal process.
+    seq_len_max : int
+        Nan sequence has to be shorter than seq_len_max to be considered for the
         peak removal process.
 
     Returns
@@ -121,59 +129,39 @@ def get_nan_sequences(
         List of lengths of the nan sequences.
     """
     data = dataset.sel(id=station).rainfall
-    # get the threshold for the peaks and set time between measurements
-    threshold = np.nanquantile(data, quantile)
-    timegap = int(
-        (data.time.to_numpy()[1] - data.time.to_numpy()[0]) / np.timedelta64(1, "m")
-    )
-    timedelta = np.timedelta64(timegap, "m")  # get the peaks
-    peaks = data.where(data > threshold, drop=True)
-
+    values = data.to_numpy()
+    times = data.time.to_numpy()
+    dt = times[1] - times[0]
+    threshold = np.nanquantile(values, quantile)
+    # indices of peaks
+    peak_idx = np.where(values > threshold)[0]
     time_peak_lst = []
     seq_start_lst = []
     seq_end_lst = []
     seq_len_lst = []
-
-    # iterate over the peaks and check if there are leading nan sequences
-    for time_peak in tqdm(
-        peaks.time.to_numpy(),
+    for i in tqdm(
+        peak_idx,
         desc="Check peaks for leading nans",
         unit=" peaks",
-        total=len(peaks.time.to_numpy()),
+        total=len(peak_idx),
     ):
         length = 0
-        # check if there are leading nan sequences
-        # start from the end of the potential nan sequence and go backwards as long as
-        # value is nan.
-        for value in reversed(
-            data.sel(time=slice(None, time_peak - timedelta)).isnull().to_numpy()
-        ):
-            if value:
-                length += 1
-            elif length > seq_len_threshold:
-                seq_start = time_peak - (timedelta * length)
-                time_peak_lst.append(time_peak)
-                seq_start_lst.append(seq_start)
-                seq_end_lst.append(time_peak - timedelta)
-                seq_len_lst.append(length)
-                length = 0
-                break
-            else:
-                break
-        if length > seq_len_threshold:
-            seq_start = time_peak - (timedelta * length)
-            time_peak_lst.append(time_peak)
-            seq_start_lst.append(seq_start)
-            seq_end_lst.append(time_peak - timedelta)
+        j = i - 1
+        # walk backwards counting NaNs
+        while j >= 0 and np.isnan(values[j]):
+            length += 1
+            j -= 1
+        if seq_len_min < length < seq_len_max:
+            time_peak_lst.append(times[i])
+            seq_start_lst.append(times[i] - dt * length)
+            seq_end_lst.append(times[i] - dt)
             seq_len_lst.append(length)
-
     if len(time_peak_lst) == 0:
         print(
             f"\nNo peaks found for station {station} "
             f"with quantile={quantile} and "
-            f"seq_len_threshold={seq_len_threshold}."
+            f"seq_len_min={seq_len_min}, seq_len_max={seq_len_max}."
         )
-
     return time_peak_lst, seq_start_lst, seq_end_lst, seq_len_lst
 
 

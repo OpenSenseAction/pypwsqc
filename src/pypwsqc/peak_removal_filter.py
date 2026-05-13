@@ -1,7 +1,6 @@
 """Skript with functions for the peak removal filter."""
 
 # import packages
-from typing import Union
 
 import numpy as np
 import poligrain as plg
@@ -186,7 +185,7 @@ def print_info(
     time_peak_lst: list[np.datetime64],
     seq_len_lst: list[int],
     aa_closest_neighbors: xr.Dataset,
-    ab_closest_neighbors: Union[xr.Dataset, None] = None,
+    ab_closest_neighbors: xr.Dataset | None = None,
 ) -> tuple[float, int, float, float, int, int]:
     """
     Print some information about the selected station.
@@ -409,7 +408,9 @@ def interpolate_precipitation(
         if neighbor is None:  # stop if there are no (no more) neighbors
             break
         # iterate over all nan sequences of the selected station
-        for seq_start, peak, seq_len in zip(seq_start_lst, time_peak_lst, seq_len_lst):
+        for seq_start, peak, seq_len in zip(
+            seq_start_lst, time_peak_lst, seq_len_lst, strict=False
+        ):
             # check if the start and peak of the nan sequence are in the time series of
             # the neighbor. If not, set this time series from this neighbor to NaN
             if seq_start not in time or peak not in time:
@@ -439,7 +440,7 @@ def interpolate_precipitation(
     # station
     # iterate over all nan sequences of the selected station
     for i, length in tqdm(
-        zip(range(len(seq_len_lst)), seq_len_lst),
+        zip(range(len(seq_len_lst)), seq_len_lst, strict=False),
         desc="Interpolate precipitation values for sequences",
         unit=" sequences",
         total=len(seq_len_lst),
@@ -449,7 +450,7 @@ def interpolate_precipitation(
             length + 1
         )  # sequence length + 1 to later also assign a new value to the peak
         # iterate over all neighbors and their time series
-        for neighbor_seqs, weight in zip(all_neighbors_seqs, weights):
+        for neighbor_seqs, weight in zip(all_neighbors_seqs, weights, strict=False):
             if np.isnan(neighbor_seqs[i]).any():
                 # If the neighbor time series was set to NaN, skip this neighbor for
                 # this sequence
@@ -495,7 +496,7 @@ def distribute_peak(
     seqs_corr_lst = []
     # iterate over all peaks (nan sequences) of the selected station
     for time_peak, seq_num in tqdm(
-        zip(time_peak_lst, range(len(seqs_lst))),
+        zip(time_peak_lst, range(len(seqs_lst)), strict=False),
         desc="Distribute peaks",
         unit=" peaks",
         total=len(time_peak_lst),
@@ -558,7 +559,7 @@ def overwrite_seq(
     # iterate over all sequences and overwrite the values of the leading nan sequences
     # and peaks with the corrected values
     for seq_corr, seq_start, peak in tqdm(
-        zip(seqs_corr_lst, seq_start_lst, time_peak_lst),
+        zip(seqs_corr_lst, seq_start_lst, time_peak_lst, strict=False),
         desc="Overwrite sequences",
         unit=" sequences",
         total=len(seqs_corr_lst),

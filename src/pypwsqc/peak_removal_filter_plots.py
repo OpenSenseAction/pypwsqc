@@ -1,10 +1,10 @@
 """Skript with functions for plots for the peak removal filter."""
 
 # import packages
-from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import xarray as xr
 from matplotlib.lines import Line2D
 from matplotlib.patches import Circle
@@ -12,10 +12,10 @@ from matplotlib.patches import Circle
 
 def plot_station_neighbors(
     a_dataset: xr.DataArray,
-    b_dataset: Union[xr.DataArray, None],
+    b_dataset: xr.DataArray | None,
     station: str,
     aa_closest_neighbors: xr.Dataset,
-    ab_closest_neighbors: Union[xr.Dataset, None],
+    ab_closest_neighbors: xr.Dataset | None,
     max_distance: float,
     zoom: bool = True,
 ) -> tuple[plt.Figure, plt.Axes]:
@@ -72,7 +72,7 @@ def plot_station_neighbors(
         plt.scatter(x=x_ref, y=y_ref, s=s, color="black", alpha=0.5)
 
     for neighbor in aa_neighbor:
-        if not isinstance(neighbor, str):  # check if neighbor is None or nan
+        if pd.isna(neighbor):
             continue
         plt.scatter(
             a_dataset.sel(id=neighbor).x.to_numpy(),
@@ -82,8 +82,8 @@ def plot_station_neighbors(
             alpha=0.5,
         )
     if b_dataset is not None:
-        for neighbor_ref in ab_neighbors:
-            if not isinstance(neighbor_ref, str):  # check if neighbor is None or nan
+        for neighbor_ref in ab_neigbors:
+            if pd.isna(neighbor_ref):
                 continue
             plt.scatter(
                 b_dataset.sel(id=neighbor_ref).x.to_numpy(),
@@ -223,7 +223,7 @@ def plot_station_neighbors(
 
 def plot_peak(
     dataset: xr.DataArray,
-    data_corr: Union[xr.Dataset, None],
+    data_corr: xr.Dataset | None,
     station: str,
     quantile: float,
     peak_num: int,
@@ -300,7 +300,7 @@ def plot_peak(
     )  # includes the peak
     x_nan_seq_others = [
         np.arange(seq_start, seq_end + timedelta * 2, timedelta)
-        for seq_start, seq_end in zip(seq_start_lst, seq_end_lst)
+        for seq_start, seq_end in zip(seq_start_lst, seq_end_lst, strict=False)
     ]  # include the peak
     x_peak = np.datetime64(time_peak_lst[peak_num])
 
@@ -361,7 +361,7 @@ def plot_peak(
 
     # mark other peaks/remaining or corrected peaks
     for time_peak_other, x_nan_seq_other, y_nan_seq_other in zip(
-        time_peak_lst, x_nan_seq_others, y_nan_seq_others
+        time_peak_lst, x_nan_seq_others, y_nan_seq_others, strict=False
     ):
         if time_peak_other in x:
             if time_peak_other == x_peak:  # skip the above selected peak

@@ -154,6 +154,21 @@ def test_fz_filter():
     np.testing.assert_almost_equal(expected.to_numpy(), result_flags.to_numpy())
 
 
+def test_fz_filter_expected_no_nan_gets_zero_or_one():
+    """In the regenerated expected file, NaN rainfall timesteps should be flagged -1."""
+    ds = xr.open_dataset("tests/test_dataset.nc").sel(
+        time=slice("2017-07-15", "2017-07-30")
+    )
+    expected = xr.open_dataset("tests/expected_array_fz_hi.nc").fz_flag
+    rainfall_ams11 = ds.rainfall.sel(id="ams11")
+
+    nan_mask = rainfall_ams11.isnull()
+    flags_at_nan = expected.where(nan_mask, drop=True)
+    assert (
+        (flags_at_nan == -1).all().item()
+    ), "some NaN timesteps not -1 in expected file"
+
+
 def test_hi_filter():
     # fmt: off
 

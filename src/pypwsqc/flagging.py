@@ -17,9 +17,12 @@ def fz_filter(
     """Faulty Zeros Filter.
 
     This function applies the FZ filter from the R package PWSQC.
-    The flag 1 means, a faulty zero has been detected. The flag -1
-    means that no flagging was done because evaluation cannot be
-    performed for the first `nint` values.
+    Flag 1 means a faulty zero has been detected. Flag 0 means that the zero
+    value has been confirmed. Flag -1 means that this timestep could not be
+    evaluated. A flag -1 appears for the first few timesteps smaller than
+    nint and if less than n_stat neighbors are reporting data. Additionally,
+    missing rainfall values are flagged as -1 because they can neither be
+    confirmed nor rejected.
 
     Note that this code here is derived from the Python translation,
     done by Niek van Andel, of the original R code from Lotte de Vos.
@@ -29,21 +32,29 @@ def fz_filter(
 
     Parameters
     ----------
-    pws_data
-        The rainfall time series of the PWS that should be flagged
-    reference
-        The rainfall time series of the reference, which can be e.g.
-        the median of neighboring PWS data.
-    nint : optional
+    ds_pws : xarray.Dataset
+        Dataset with PWS rainfall time series with dimensions 'time' and 'id'.
+    nint : int
         The number of subsequent data points which have to be zero, while
         the reference has values larger than zero, to set the flag for
         this data point to 1.
+    n_stat : int
+        The minimum number of neighboring stations that must report rainfall
+        for a reliable evaluation of the data point.
+    distance_matrix : xarray.DataArray
+        Matrix with distances between all stations in the data set.
+    max_distance : float, optional
+        The maximum distance (in meters) to consider neighboring stations.
 
     Returns
     -------
     xarray.Dataset
-        time series of flags
+        Input dataset with a new variable fz_flag, which contains the flags
+        for each time step and station. Two more variables are added to the dataset:
+        reference and nbrs_not_nan.
     """
+    ds_pws = ds_pws.transpose("id", "time")  # Ensure correct dimension order
+
     # calculate support variables
     if "reference" not in ds_pws:
         ds_pws["reference"], ds_pws["nbrs_not_nan"] = _calc_reference_and_nbrs_not_nan(
@@ -89,14 +100,8 @@ def fz_filter(
     # add to dataset
     ds_pws["fz_flag"] = fz_flag
 
-    # check if last nint timesteps are NaN in rolling window
-    nan_in_last_nint = (
-        ds_pws["rainfall"].rolling(time=nint, center=True).construct("window_dim")
-    )
-    all_nan_in_window = nan_in_last_nint.isnull().all(dim="window_dim")
-
-    # Apply the mask to set fz_flag to -1 where the condition is met
-    ds_pws["fz_flag"] = ds_pws["fz_flag"].where(~all_nan_in_window, -1)
+    # Assign flag -1 to all time steps where rainfall is NaN
+    ds_pws["fz_flag"] = ds_pws["fz_flag"].where(ds_pws["rainfall"].notnull(), -1)
 
     return ds_pws
 

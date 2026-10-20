@@ -124,7 +124,7 @@ def fit_gamma_params_with_threshold(
         return np.nan, np.nan, np.nan
 
     # Handle failed preprocessing
-    if any(x is np.nan for x in [initial_guess, raindata, raindata_trs, p0]):
+    if np.isnan(p0):
         return np.nan, np.nan, np.nan
 
     # Compute initial guess from method of moments

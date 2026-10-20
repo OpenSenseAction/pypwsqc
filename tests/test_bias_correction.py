@@ -54,6 +54,16 @@ def test_negative_log_likelihood_invalid_params():
         )
 
 
+def test_negative_log_likelihood_finite_at_parameter_bounds():
+    # pdf of 5.0 with scale 1e-5 underflows to 0; the log-likelihood must stay finite
+    raindata = np.array([0.2, 0.3, 0.5, 1.0, 5.0])
+    raindata_trs = raindata[raindata > 0.5]
+    nll = bias_correction._negative_log_likelihood(
+        [1e-5, 1e-5], 0.5, raindata, raindata_trs
+    )
+    assert np.isfinite(nll)
+
+
 def test_fit_gamma_with_threshold_too_little_data():
     threshold = 0.1
     data = np.array([0, 0, 0, 0, 1, 0.5, 0.8])

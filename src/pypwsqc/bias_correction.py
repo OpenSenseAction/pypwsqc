@@ -88,10 +88,10 @@ def _negative_log_likelihood(initial_guess, threshold, raindata, raindata_trs):
         msg = "Gamma Dist not defined for params == 0!"
         raise ValueError(msg)
 
-    y = stats.gamma.pdf(raindata_trs, a=aa, loc=0, scale=bb)
-    pa = stats.gamma.cdf(threshold, a=aa, loc=0, scale=bb)
+    y = stats.gamma.logpdf(raindata_trs, a=aa, loc=0, scale=bb)
+    pa = stats.gamma.logcdf(threshold, a=aa, loc=0, scale=bb)
 
-    ltest = np.sum(np.log(y)) + np.log(pa) * (raindata.shape[0] - raindata_trs.shape[0])
+    ltest = np.sum(y) + pa * (raindata.shape[0] - raindata_trs.shape[0])
     return -ltest
 
 

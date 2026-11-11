@@ -548,7 +548,7 @@ def _calc_reference_and_nbrs_not_nan(ds_pws, distance_matrix, max_distance):
     # Work on plain numpy arrays: selecting and reducing with xarray once per
     # station dominated the run time on networks with thousands of stations.
     rainfall = ds_pws.rainfall.transpose("id", "time").to_numpy()
-    distances = distance_matrix.sel(id=ds_pws.id.data).to_numpy()
+    distances = distance_matrix.sel(id=ds_pws.id.data).transpose("id", ...).to_numpy()
     is_neighbor = (distances < max_distance) & (distances > 0)
 
     # As before, neighbors are named by the distance matrix's `id` labels
@@ -562,8 +562,8 @@ def _calc_reference_and_nbrs_not_nan(ds_pws, distance_matrix, max_distance):
     nbrs_not_nan = np.zeros(rainfall.shape, dtype=int)
     # Stations without neighbors used to get a float64 NaN row, which
     # upcast the whole reference; keep that dtype.
-    no_neighbors = not is_neighbor.any(axis=1).all()
-    if no_neighbors or rainfall.dtype.kind != "f":
+    any_isolated = not is_neighbor.any(axis=1).all()
+    if any_isolated or rainfall.dtype.kind != "f":
         ref_dtype = np.float64
     else:
         ref_dtype = rainfall.dtype
@@ -576,6 +576,6 @@ def _calc_reference_and_nbrs_not_nan(ds_pws, distance_matrix, max_distance):
             reference[i] = bn.nanmedian(neighbors, axis=0)
 
     ds_pws["nbrs_not_nan"] = (("id", "time"), nbrs_not_nan)
-    ds_pws["reference"] = (("id", "time"), reference)
+    ds_pws["reference"] = (("id", "time"), reference, ds_pws.rainfall.attrs)
 
     return ds_pws.reference, ds_pws.nbrs_not_nan

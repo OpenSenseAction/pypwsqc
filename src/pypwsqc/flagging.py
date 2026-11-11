@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import bottleneck as bn
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -544,37 +545,37 @@ def _calc_bias_corr_factor(
 
 
 def _calc_reference_and_nbrs_not_nan(ds_pws, distance_matrix, max_distance):
-    nbrs_not_nan = []
-    reference = []
+    # Work on plain numpy arrays: selecting and reducing with xarray once per
+    # station dominated the run time on networks with thousands of stations.
+    rainfall = ds_pws.rainfall.transpose("id", "time").to_numpy()
+    distances = distance_matrix.sel(id=ds_pws.id.data).transpose("id", ...).to_numpy()
+    is_neighbor = (distances < max_distance) & (distances > 0)
 
-    time_len = ds_pws.sizes["time"]  # length of the time dimension
+    # As before, neighbors are named by the distance matrix's `id` labels
+    # and then looked up in ds_pws.
+    neighbor_pos = ds_pws.indexes["id"].get_indexer(distance_matrix.id.data)
+    missing = (neighbor_pos < 0) & is_neighbor.any(axis=0)
+    if missing.any():
+        msg = f"Neighbors not in ds_pws: {list(distance_matrix.id.data[missing])}"
+        raise KeyError(msg)
 
-    for pws_id in ds_pws.id.data:
-        neighbor_ids = distance_matrix.id.data[
-            (distance_matrix.sel(id=pws_id) < max_distance)
-            & (distance_matrix.sel(id=pws_id) > 0)
-        ]
+    nbrs_not_nan = np.zeros(rainfall.shape, dtype=int)
+    # Stations without neighbors used to get a float64 NaN row, which
+    # upcast the whole reference; keep that dtype.
+    any_isolated = not is_neighbor.any(axis=1).all()
+    if any_isolated or rainfall.dtype.kind != "f":
+        ref_dtype = np.float64
+    else:
+        ref_dtype = rainfall.dtype
+    reference = np.full(rainfall.shape, np.nan, dtype=ref_dtype)
 
-        if len(neighbor_ids) == 0:
-            # No neighbors → fill with np.nan
-            nr_nbrs_not_nan = xr.DataArray(
-                np.zeros(time_len, dtype=int),
-                dims=["time"],
-                coords={"time": ds_pws.time},
-            )
-            median = xr.DataArray(
-                np.full(time_len, np.nan), dims=["time"], coords={"time": ds_pws.time}
-            )
-        else:
-            nr_nbrs_not_nan = (
-                ds_pws.rainfall.sel(id=neighbor_ids).notnull().sum(dim="id")
-            )
-            median = ds_pws.sel(id=neighbor_ids).rainfall.median(dim="id")
+    for i, row in enumerate(is_neighbor):
+        if row.any():
+            neighbors = rainfall[neighbor_pos[row]]
+            nbrs_not_nan[i] = np.count_nonzero(~np.isnan(neighbors), axis=0)
+            reference[i] = bn.nanmedian(neighbors, axis=0)
 
-        nbrs_not_nan.append(nr_nbrs_not_nan)
-        reference.append(median)
-
-    ds_pws["nbrs_not_nan"] = xr.concat(nbrs_not_nan, dim="id")
-    ds_pws["reference"] = xr.concat(reference, dim="id")
+    ds_pws["nbrs_not_nan"] = (("id", "time"), nbrs_not_nan)
+    ds_pws["reference"] = (("id", "time"), reference, ds_pws.rainfall.attrs)
 
     return ds_pws.reference, ds_pws.nbrs_not_nan

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import bottleneck as bn
 import numpy as np
-import pandas as pd
 import xarray as xr
 
 
@@ -204,15 +203,13 @@ def _so_filter_one_station(ds_station, ds_neighbors, evaluation_period, mmatch):
     xarray.Dataset
         number of neighbors with enough wet time steps
     """
-    # rolling pearson correlation
-    s_rainfall = ds_station.rainfall.to_series()
-    s_neighbors_rain = ds_neighbors.rainfall.to_series()
-    corr = s_rainfall.rolling(evaluation_period, min_periods=1).corr(s_neighbors_rain)
-    ds = xr.Dataset.from_dataframe(pd.DataFrame({"corr": corr}))
-
     # create dataframe of neighboring stations
-    df_nbrs = ds_neighbors.to_dataframe()
-    df_nbrs = df_nbrs["rainfall"].unstack("id")  # noqa: PD010
+    df_nbrs = ds_neighbors.rainfall.transpose("time", "id").to_pandas()
+
+    # rolling pearson correlation, per neighbor
+    s_rainfall = ds_station.rainfall.to_series()
+    corr = df_nbrs.rolling(evaluation_period, min_periods=1).corr(s_rainfall)
+    ds = xr.Dataset({"corr": xr.DataArray(corr)})
 
     # boolean arrays - True if a rainy time step, False if 0 or NaN.
     rainy_timestep_at_nbrs = df_nbrs > 0

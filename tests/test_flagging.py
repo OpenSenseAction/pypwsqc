@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 import poligrain as plg
 import xarray as xr
 
@@ -411,6 +412,41 @@ def test_so_filter():
     expected_flags = expected.sel(time=result_flags.time)
 
     np.testing.assert_almost_equal(expected_flags.to_numpy(), result_flags.to_numpy())
+
+
+def test_so_filter_correlation_per_neighbor():
+    # each neighbor gets its own rolling correlation, whatever the dimension order
+    rng = np.random.default_rng(0)
+    evaluation_period = 10
+    ds_pws = xr.Dataset(
+        {"rainfall": (("id", "time"), rng.gamma(0.5, 1, size=(3, 50)))},
+        coords={
+            "id": ["a", "b", "c"],
+            "time": pd.date_range("2020-01-01", periods=50, freq="5min"),
+            "x": ("id", [0.0, 1000.0, 2000.0]),
+            "y": ("id", [0.0, 0.0, 0.0]),
+        },
+    )
+    distance_matrix = plg.spatial.calc_point_to_point_distances(ds_pws, ds_pws)
+
+    s_a, s_b, s_c = (ds_pws.rainfall.sel(id=i).to_series() for i in ["a", "b", "c"])
+    expected = (
+        s_a.rolling(evaluation_period, min_periods=1).corr(s_b)
+        + s_a.rolling(evaluation_period, min_periods=1).corr(s_c)
+    ) / 2
+
+    for ds in [ds_pws, ds_pws.transpose("time", "id")]:
+        result = pypwsqc.flagging.so_filter(
+            ds_pws=ds.copy(),
+            distance_matrix=distance_matrix,
+            evaluation_period=evaluation_period,
+            mmatch=0,
+            gamma=0.15,
+            n_stat=1,
+        )
+        np.testing.assert_allclose(
+            result.median_corr_nbrs.sel(id="a").to_numpy(), expected.to_numpy()
+        )
 
 
 def test_bias_corr():
